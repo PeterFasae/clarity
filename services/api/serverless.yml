@@ -2,7 +2,31 @@ service: clarity-api
 frameworkVersion: '3'
 
 plugins:
+  - serverless-iam-roles-per-function
   - serverless-offline
+
+# No short-form CloudFormation tags (!Ref, !GetAtt) anywhere in this file. The
+# integration tests parse it with js-yaml to build the local tables from the
+# same definitions the stack deploys, and short tags would need a custom schema.
+
+custom:
+  # Declared once, attached to every route below. `userId` is only ever read
+  # from the verified claims this authorizer produces.
+  cognitoAuthorizer:
+    name: CognitoAuthorizer
+    type: COGNITO_USER_POOLS
+    arn:
+      Fn::GetAtt: [CognitoUserPool, Arn]
+  notesTableArn:
+    Fn::GetAtt: [NotesTable, Arn]
+  preferencesTableArn:
+    Fn::GetAtt: [PreferencesTable, Arn]
+  userIdIndexArn:
+    Fn::Join:
+      - '/'
+      - - Fn::GetAtt: [NotesTable, Arn]
+        - 'index'
+        - 'UserIdIndex'
 
 provider:
   name: aws
@@ -12,108 +36,301 @@ provider:
   memorySize: 512
   timeout: 10
   architecture: arm64
+  logRetentionInDays: 30
+  # No provider-level iam block on purpose: every function below declares its
+  # own role with only the actions and resources it needs (report §4.3E).
   environment:
     NOTES_TABLE: ${self:service}-notes-${sls:stage}
     PREFERENCES_TABLE: ${self:service}-preferences-${sls:stage}
     # Comma-separated allowlist. Never a wildcard — respond.js echoes back only a
     # matching Origin, so an unlisted origin gets no CORS header at all.
     ALLOWED_ORIGINS: ${env:ALLOWED_ORIGINS, 'http://localhost:8080,http://localhost:8081'}
-  # Phase 1 adds: the Cognito user pool + API Gateway JWT authorizer on every
-  # route, the DynamoDB resources, and per-function least-privilege IAM roles
-  # (deleteNote gets DeleteItem and nothing else — report §4.3E).
+    # Set only in local development, to point the SDK at DynamoDB Local.
+    DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, ''}
 
 package:
   individually: false
   patterns:
     - '!tests/**'
-    - '!node_modules/.cache/**'
+    - '!scripts/**'
+    - '!.dynamodb/**'
 
 functions:
+  # --- notes ---------------------------------------------------------------
+
   createNote:
     handler: functions/createNote.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:PutItem]
+        Resource: ${self:custom.notesTableArn}
     events:
       - http:
           path: notes
           method: post
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   getNotes:
     # One handler. Filters arrive as query params (?q=, ?filter=, ?limit=, ?cursor=).
     # The predecessor mapped four routes at this handler and branched on
     # event.path because the frontend never sent query params; that is gone.
     handler: functions/getNotes.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:Query]
+        Resource: ${self:custom.userIdIndexArn}
+      - Effect: Allow
+        Action: [dynamodb:BatchGetItem]
+        Resource: ${self:custom.notesTableArn}
     events:
       - http:
           path: notes
           method: get
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   getNote:
     # Missing in the predecessor despite the frontend calling it.
     handler: functions/getNote.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:GetItem]
+        Resource: ${self:custom.notesTableArn}
     events:
       - http:
           path: notes/{id}
           method: get
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   updateNote:
     handler: functions/updateNote.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:GetItem, dynamodb:PutItem]
+        Resource: ${self:custom.notesTableArn}
     events:
       - http:
           path: notes/{id}
           method: put
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   deleteNote:
+    # DeleteItem and nothing else. Ownership is enforced by a ConditionExpression
+    # rather than a read-then-write, so this role needs no GetItem.
     handler: functions/deleteNote.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:DeleteItem]
+        Resource: ${self:custom.notesTableArn}
     events:
       - http:
           path: notes/{id}
           method: delete
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   getNoteSummary:
     handler: functions/getNoteSummary.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:GetItem]
+        Resource: ${self:custom.notesTableArn}
     events:
       - http:
           path: notes/{id}/summary
           method: get
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   summarizeNote:
     # Force a recompute. ?mode=local|llm, subject to the user's aiEnabled.
     handler: functions/summarizeNote.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:GetItem, dynamodb:PutItem]
+        Resource: ${self:custom.notesTableArn}
+      - Effect: Allow
+        Action: [dynamodb:GetItem]
+        Resource: ${self:custom.preferencesTableArn}
     events:
       - http:
           path: notes/{id}/summarize
           method: post
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   getActions:
     handler: functions/getActions.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:Query]
+        Resource: ${self:custom.userIdIndexArn}
     events:
       - http:
           path: actions
           method: get
+          authorizer: ${self:custom.cognitoAuthorizer}
+
+  # --- the user ------------------------------------------------------------
 
   getPreferences:
     handler: functions/getPreferences.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:GetItem]
+        Resource: ${self:custom.preferencesTableArn}
     events:
       - http:
           path: me/preferences
           method: get
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   putPreferences:
     handler: functions/putPreferences.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:GetItem, dynamodb:PutItem]
+        Resource: ${self:custom.preferencesTableArn}
     events:
       - http:
           path: me/preferences
           method: put
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   exportMe:
     handler: functions/exportMe.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:Query]
+        Resource: ${self:custom.userIdIndexArn}
+      - Effect: Allow
+        Action: [dynamodb:GetItem]
+        Resource: ${self:custom.preferencesTableArn}
     events:
       - http:
           path: me/export
           method: post
+          authorizer: ${self:custom.cognitoAuthorizer}
 
   deleteMe:
     handler: functions/deleteMe.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: [dynamodb:Query]
+        Resource: ${self:custom.userIdIndexArn}
+      - Effect: Allow
+        Action: [dynamodb:BatchWriteItem]
+        Resource: ${self:custom.notesTableArn}
+      - Effect: Allow
+        Action: [dynamodb:DeleteItem]
+        Resource: ${self:custom.preferencesTableArn}
     events:
       - http:
           path: me
           method: delete
+          authorizer: ${self:custom.cognitoAuthorizer}
+
+  # --- CORS ----------------------------------------------------------------
+
+  preflight:
+    # The only unauthenticated route, because a browser sends no credentials on
+    # a preflight. It touches nothing and answers from the same origin allowlist
+    # every other response uses, so there is no place for a wildcard to appear.
+    handler: functions/preflight.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: options
+
+resources:
+  Resources:
+    NotesTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.NOTES_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        SSESpecification:
+          SSEEnabled: true
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        AttributeDefinitions:
+          - AttributeName: noteId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: updatedAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: noteId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          # Every list, filter and search path goes through this. The updatedAt
+          # sort key is what makes reverse-chronological listing free.
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: updatedAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+    PreferencesTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.PREFERENCES_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        SSESpecification:
+          SSEEnabled: true
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:service}-users-${sls:stage}
+        UsernameAttributes: [email]
+        AutoVerifiedAttributes: [email]
+        MfaConfiguration: 'OFF'
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 12
+            RequireLowercase: true
+            RequireUppercase: true
+            RequireNumbers: true
+            RequireSymbols: false
+        AccountRecoverySetting:
+          RecoveryMechanisms:
+            - Name: verified_email
+              Priority: 1
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:service}-web-${sls:stage}
+        UserPoolId:
+          Ref: CognitoUserPool
+        GenerateSecret: false
+        PreventUserExistenceErrors: ENABLED
+        ExplicitAuthFlows:
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        AccessTokenValidity: 1
+        IdTokenValidity: 1
+        RefreshTokenValidity: 30
+        TokenValidityUnits:
+          AccessToken: hours
+          IdToken: hours
+          RefreshToken: days
+
+  Outputs:
+    UserPoolId:
+      Value:
+        Ref: CognitoUserPool
+    UserPoolClientId:
+      Value:
+        Ref: CognitoUserPoolClient

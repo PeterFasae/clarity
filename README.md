@@ -23,10 +23,16 @@ npm install
 npm test                     # the retrieval engine's 25 tests
 npm run build                # typecheck + build every workspace
 
-npm run dev -w apps/web      # the product SPA        → :8080
-npm run dev -w apps/site     # the marketing site     → :8081
-npm run dev -w services/api  # serverless offline     → :3000/dev
+npm run dev -w apps/web            # the product SPA     → :8080
+npm run dev -w apps/site           # the marketing site  → :8081
+npm run dev:local -w services/api  # the whole API, local → :3000/dev
 ```
+
+`dev:local` raises DynamoDB Local alongside `serverless offline`, so the API
+runs with nothing deployed. It needs Java, and a one-off
+`npm run dynamo:install -w services/api` to fetch the database (~64MB,
+gitignored). `npm run dev -w services/api` is the same server pointed at real
+AWS tables instead.
 
 ## Layout
 

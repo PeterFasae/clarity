@@ -1,9 +1,23 @@
-import { unauthenticated } from "../lib/respond.js";
-import { getUserId } from "../lib/auth.js";
+import { DEFAULT_PREFERENCES, PreferencesSchema } from '@clarity/core';
+import { getPreferences, listAllNotesByUser } from '../lib/dynamo.js';
+import { withAuth } from '../lib/handler.js';
+import { ok, toWireNote } from '../lib/respond.js';
 
-/** POST /me/export — GDPR. All notes + preferences as JSON. STUB: Phase 3. */
-export async function handler(event) {
-  const userId = getUserId(event);
-  if (!userId) return unauthenticated(event);
-  throw new Error("exportMe is not implemented until Phase 3");
-}
+/**
+ * POST /me/export — everything this account has, as plain JSON.
+ *
+ * Scoped by the same UserIdIndex query every other read uses, so it can only
+ * ever contain the caller's own notes. There is a test that says so.
+ */
+export const handler = withAuth(async (event, userId) => {
+  const [notes, stored] = await Promise.all([
+    listAllNotesByUser(userId),
+    getPreferences(userId),
+  ]);
+
+  return ok(event, {
+    exportedAt: new Date().toISOString(),
+    notes: notes.map((note) => toWireNote(note)),
+    preferences: PreferencesSchema.parse({ ...DEFAULT_PREFERENCES, ...(stored ?? {}) }),
+  });
+});

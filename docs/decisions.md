@@ -153,3 +153,135 @@ A 553 KB copy of axe-core sat in the site's `public/` directory, unreferenced by
 any source file, which means it was being copied verbatim into every production
 build. Phase 3 wants axe in CI, and that is a devDependency plus a test run, not
 a public asset. Removed.
+
+---
+
+## Phase 1 — data, auth, API
+
+### 1.1 — `deleteNote` holds DeleteItem and nothing else
+
+Report §4.3E asks for per-function least privilege, and BUILD.md names this
+function specifically: "`deleteNote` gets `DeleteItem` on the table and nothing
+else." The obvious implementation contradicts that — you have to read the note
+to know whose it is before you can answer 403 rather than 404, and reading needs
+GetItem. The way out is `ReturnValuesOnConditionCheckFailure: ALL_OLD`: the
+delete carries `ConditionExpression: attribute_exists(noteId) AND userId =
+:userId`, and when that condition fails DynamoDB hands back the item it refused
+to touch. An item present means someone else's note (403); nothing means no such
+note (404). One statement, one action, both outcomes distinguishable.
+`updateNote` genuinely does need GetItem, because a partial update has to merge
+onto what is there.
+
+### 1.2 — CORS preflight is a Lambda, not API Gateway's mock integration
+
+`cors: true` on a serverless `http` event generates a mock OPTIONS integration
+with one hardcoded `Access-Control-Allow-Origin`, which for a multi-origin
+allowlist means either a wildcard or picking a favourite. Instead there is one
+`preflight` function on `OPTIONS /{proxy+}` — the only route without an
+authorizer, because browsers send no credentials on a preflight — answering from
+the same allowlist in `lib/respond.js` as every other response. There is no code
+path in the service that can emit `*`.
+
+### 1.3 — CORS is proved in a unit test, not only over HTTP
+
+`serverless offline` decorates every response with Hapi's own CORS headers, and
+neither `--corsAllowOrigin` nor the absence of `cors:` on the events stops it —
+an unlisted origin gets echoed back by the emulator regardless of what the
+handler returned. That would have made an HTTP-level assertion meaningless, so
+the guarantee lives in `tests/respond.test.js`, which calls the real functions
+in-process, plus two integration checks that go through the emulator's
+Lambda-invocation API (`/2015-03-31/functions/…/invocations`) and so see the raw
+handler response with nothing added. In production a proxy integration sends the
+handler's headers and nothing else, which is exactly what those tests pin.
+
+### 1.4 — A title the user typed survives; a derived one keeps following the first line
+
+The predecessor re-derived the title from the first line on every write, so
+toggling `pinned` would silently rename a note somebody had named. The rule now:
+if the request supplies a title, use it; otherwise re-derive only when the
+stored title still equals `deriveTitle(oldContent)` — that is, only when it was
+derived in the first place. Comparing against the *old* content is what makes
+"was this typed or derived?" answerable without storing a flag for it.
+
+### 1.5 — `?mode=llm` without `aiEnabled` is refused, not downgraded
+
+`POST /notes/{id}/summarize?mode=llm` returns 409 `ai_disabled` when the user's
+`aiEnabled` is false, rather than quietly falling back to the local engine. Off
+has to mean off in a way the user can verify. The silent fallback that *does*
+exist — Phase 3's "if the LLM errors or times out, the local engine answers" —
+is a different case: there the user has opted in and the priority is that an AI
+outage never blocks a save.
+
+### 1.6 — `POST /notes/{id}/summarize` returns the note, not the summary
+
+`GET /notes/{id}/summary` returns `SummaryResponse` as the contract says. The
+POST is a write and moves `updatedAt`, so it returns the whole `NoteResponse` —
+otherwise every client would have to follow it with a GET to stay consistent.
+
+### 1.7 — Integration tests run against DynamoDB Local and `serverless offline`
+
+The rig starts the real DynamoDB engine as a Java process and the real routing
+and authorizer layer, and builds both tables from the CloudFormation resources
+in `serverless.yml` rather than from a second copy of the schema — so a schema
+change cannot pass the tests and fail on deploy. A hand-written in-memory fake
+would have agreed with the handlers by construction and proved nothing about
+expressions, reserved words, GSI behaviour or conditional writes. The jar is
+~64MB, cached at `services/api/.dynamodb` and gitignored; `npm run
+dynamo:install -w services/api` fetches it. The `dynamodb-local` package's own
+`launch()` does not resolve under Node 23, so the rig spawns the jar directly
+and uses that package only for the download.
+
+### 1.8 — Test JWTs are unsigned
+
+`serverless offline` decodes a Cognito authorizer's token without verifying it,
+which is correct for an emulator — signature verification is API Gateway's job
+and happens before a Lambda is ever invoked. So the tests mint unsigned
+Cognito-shaped tokens. What they establish is what the handlers do with a
+`sub` once one exists, and that a request carrying no token at all never reaches
+one. Verifying Cognito's signature would be testing AWS.
+
+### 1.9 — The latency gate passes locally, and that is a weaker claim than it looks
+
+Measured over a seeded 500-note corpus, 100 samples after 20 warm-up calls,
+against `serverless offline` + DynamoDB Local on an M-series laptop:
+
+| operation | avg | p50 | p95 | max |
+|---|---|---|---|---|
+| createNote | 2.7ms | 2.6ms | 3.5ms | 4.1ms |
+| getNotes (list) | 4.2ms | 4.1ms | 5.3ms | 5.9ms |
+| getNotes (search) | 29.2ms | 29.0ms | 32.2ms | 36.5ms |
+| summarize | 4.1ms | 4.0ms | 5.4ms | 5.8ms |
+| getNote | 2.0ms | 1.9ms | 3.0ms | 3.5ms |
+
+Every operation is far inside the 350ms p95 budget, but **this is not a
+reproduction of report §5.4's 240/275/310ms averages.** Those were measured
+against a deployed stack; this run has no API Gateway hop, no cross-AZ DynamoDB
+call and no Lambda container, so it is a lower bound and a regression detector.
+What it does establish is that no handler does anything pathological, and that
+the fixed cost of the work itself is single-digit milliseconds — which means the
+deployed figures will be dominated by network and platform overhead rather than
+by anything in this repository. Running `npm run latency -w services/api --
+--base <deployed-stage-url>` against a real stage is the measurement the
+dissertation's numbers should be compared against, and it needs AWS credentials
+this build does not have.
+
+### 1.10 — The search ceiling, measured
+
+The same harness at 2,000 notes puts `getNotes (search)` at 87.4ms avg / 109.1ms
+p95, against 29.2ms / 32.2ms at 500 — roughly linear in corpus size, as an
+in-Lambda TF-IDF build should be. That is the evidence behind the "comfortable
+to roughly 1–2k notes per user" ceiling in ENGINEERING.md: add the ~250ms of platform
+and network overhead that separates these numbers from the deployed ones and a
+2,000-note search lands at the 350ms budget rather than inside it. The upgrade
+path — a term→noteIds inverted-index table written on save — stays unbuilt until
+a real user is near that number, and `search(query, notes, opts) → [{note,
+score}]` is shaped so the scorer can be replaced without touching a caller.
+
+### 1.11 — `npm run dev:local` reuses the test rig
+
+`npm run dev -w services/api` is plain `serverless offline` against real AWS
+tables, which needs a deployed stage. `dev:local` raises DynamoDB Local and
+builds both tables from `serverless.yml` first, on the stage and port
+`apps/web` already defaults to. It imports the same setup module the
+integration tests use rather than keeping a second copy, so "it passed the
+tests" and "it works in the app" cannot come apart.

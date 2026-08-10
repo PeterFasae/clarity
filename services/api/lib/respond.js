@@ -7,7 +7,8 @@ import { ERROR_CODES } from '@clarity/core';
  * Both of those are deliberate. The predecessor had a hand-rolled headers
  * object in every handler, each with `Access-Control-Allow-Origin: '*'`, and no
  * mapping at all between the persisted shape and the shape the frontend
- * expected. Centralising serialisation means no handler can forget to turn
+ * expected — so `note.id` was `undefined` and every per-note call hit a bad
+ * path. Centralising serialisation means no handler can forget to turn
  * `noteId` into `id`; centralising CORS means the allowlist is enforced once.
  */
 
@@ -22,7 +23,7 @@ function allowlist() {
 /**
  * Echo the request's Origin back only if it is on the allowlist. An unlisted
  * origin gets no CORS header at all, so the browser blocks the response —
- * which is the point. Never `*`.
+ * which is the point. There is no code path here that can emit a wildcard.
  */
 export function corsHeaders(event) {
   const origin = event?.headers?.origin ?? event?.headers?.Origin;
@@ -57,7 +58,28 @@ export function respond(event, statusCode, body) {
 
 export const ok = (event, body) => respond(event, 200, body);
 export const created = (event, body) => respond(event, 201, body);
-export const noContent = (event) => respond(event, 204, undefined);
+
+export const noContent = (event) => ({
+  statusCode: 204,
+  headers: { 'Cache-Control': 'no-store', ...corsHeaders(event) },
+  body: '',
+});
+
+/**
+ * The preflight answer. Same allowlist, so an unlisted origin gets a 204 with
+ * no CORS headers — which the browser reads as "not allowed", exactly as it
+ * should.
+ */
+export const preflight = (event) => ({
+  statusCode: 204,
+  headers: {
+    ...corsHeaders(event),
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Max-Age': '600',
+  },
+  body: '',
+});
 
 export function failure(event, statusCode, error, message, details) {
   return respond(event, statusCode, {
@@ -72,7 +94,7 @@ export const unauthenticated = (event, message) =>
 
 /**
  * 403, not 404. Someone else's note exists — we simply will not hand it over.
- * Phase 1 has a test for this on read, update and delete.
+ * There is a test for this on read, update and delete.
  */
 export const forbidden = (event, message) =>
   failure(event, 403, ERROR_CODES.forbidden, message ?? 'That note belongs to someone else.');

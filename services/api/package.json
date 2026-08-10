@@ -6,8 +6,12 @@
   "description": "The Clarity API — Lambda + DynamoDB + Cognito, per the research report's architecture (§3.3, §4.2, §4.3).",
   "scripts": {
     "dev": "serverless offline",
+    "dev:local": "node scripts/dev-local.js",
     "deploy": "serverless deploy",
-    "test": "vitest run --root ."
+    "package": "serverless package",
+    "dynamo:install": "node scripts/install-dynamo-local.js",
+    "seed": "node scripts/seed.js",
+    "latency": "node scripts/latency.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.633.0",
@@ -17,7 +21,10 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "dynamodb-local": "^0.0.35",
+    "js-yaml": "^4.3.1",
     "serverless": "^3.38.0",
+    "serverless-iam-roles-per-function": "^3.2.0",
     "serverless-offline": "^13.6.0"
   }
 }

@@ -64,6 +64,20 @@ export const SummariseQuerySchema = z.object({
 });
 export type SummariseQuery = z.infer<typeof SummariseQuerySchema>;
 
+// ----------------------------------------------------------------- gdpr
+
+/**
+ * `DELETE /me` is irreversible and takes everything, so it will not act on a
+ * bare request. The client has to say so explicitly, which means an accidental
+ * or forged request does nothing.
+ */
+export const DeleteAccountRequestSchema = z.object({
+  confirm: z.literal(true, {
+    errorMap: () => ({ message: 'Deleting an account has to be confirmed explicitly.' }),
+  }),
+});
+export type DeleteAccountRequest = z.infer<typeof DeleteAccountRequestSchema>;
+
 // ------------------------------------------------------------ responses
 
 export const NoteResponseSchema = z.object({ note: NoteSchema });

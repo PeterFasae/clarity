@@ -1,7 +1,7 @@
 {
   "$comment": "The single registry of what actually exists. Both apps/web and apps/site read it, so a 'Coming soon' label cannot rot after a feature ships or slips. status is built | in-progress | planned. Public copy may only describe a feature in the PRESENT TENSE when its status is 'built' — see CONTEXT.md §6. Update this file in the same commit as any change to what a feature does.",
   "updated": "2026-08-10",
-  "phase": "0 — merge and scaffold complete; Phase 1 (data, auth, API) is next",
+  "phase": "1 — data, auth and API complete and tested locally; not yet deployed. Phase 2 (the ADHD product layer) is next.",
   "features": [
     {
       "id": "quick-capture",
@@ -31,7 +31,7 @@
       "group": "understand",
       "status": "in-progress",
       "publicCopy": "Turn a long, messy note into its key points, so review is possible even at low attention. The original is always kept.",
-      "note": "The summariser itself is written and tested, and you can try it in the demo on this site. Wiring it to a saved note is the work in progress."
+      "note": "The summariser runs on the server on every save, and you can try it in the demo on this site. The panel that shows it to you is next."
     },
     {
       "id": "action-items",
@@ -39,7 +39,7 @@
       "group": "understand",
       "status": "in-progress",
       "publicCopy": "Pull the “I need to email Sam” out of a wall of notes and turn it into something you can act on.",
-      "note": "Extraction is written and tested; the list view across your notes is the work in progress."
+      "note": "Extraction runs on save and the server can list every action across your notes. The list view is next."
     },
     {
       "id": "suggested-tags",
@@ -61,14 +61,15 @@
       "group": "organise",
       "status": "in-progress",
       "publicCopy": "Search matches what a note says, not what you happened to call it.",
-      "note": "The ranking is written and tested — try it in the demo. Running it over your own notes is the work in progress."
+      "note": "Search runs on the server across your own notes and returns a relevance score. The search box is next."
     },
     {
       "id": "pin-archive-tag",
       "name": "Pin, archive, tag",
       "group": "organise",
-      "status": "planned",
-      "publicCopy": "Lightweight triage for the notes that matter now versus later."
+      "status": "in-progress",
+      "publicCopy": "Lightweight triage for the notes that matter now versus later.",
+      "note": "The API stores and filters on these. The controls in the app are next."
     },
     {
       "id": "reminders",
@@ -119,22 +120,25 @@
       "id": "preferences-sync",
       "name": "Settings that follow you",
       "group": "adapt",
-      "status": "planned",
-      "publicCopy": "Set the interface once and it follows you to every device."
+      "status": "in-progress",
+      "publicCopy": "Set the interface once and it follows you to every device.",
+      "note": "Preferences are stored per account and follow you across devices. Wiring the settings panel to them is next."
     },
     {
       "id": "accounts",
       "name": "Accounts",
       "group": "platform",
       "status": "in-progress",
-      "publicCopy": "Your own account, with your notes visible only to you."
+      "publicCopy": "Your own account, with your notes visible only to you.",
+      "note": "Accounts, ownership and per-account isolation are built and tested on the server. Sign-up and sign-in screens are next."
     },
     {
       "id": "cloud-sync",
       "name": "Cloud sync",
       "group": "platform",
       "status": "in-progress",
-      "publicCopy": "Phone to laptop mid-sentence. Nothing to save, nothing to lose."
+      "publicCopy": "Phone to laptop mid-sentence. Nothing to save, nothing to lose.",
+      "note": "Notes are stored per account on the server. The app is not connected to it yet."
     },
     {
       "id": "offline-capture",
@@ -154,15 +158,17 @@
       "id": "data-export",
       "name": "Export everything",
       "group": "platform",
-      "status": "planned",
-      "publicCopy": "Download every note and setting you have, as plain JSON, whenever you want."
+      "status": "in-progress",
+      "publicCopy": "Download every note and setting you have, as plain JSON, whenever you want.",
+      "note": "The API returns every note and setting as JSON. A button you can press is next."
     },
     {
       "id": "account-deletion",
       "name": "Delete everything",
       "group": "platform",
-      "status": "planned",
-      "publicCopy": "Delete your account and everything in it, in one action."
+      "status": "in-progress",
+      "publicCopy": "Delete your account and everything in it, in one action.",
+      "note": "The API deletes every note and setting in one call, and requires an explicit confirmation. The flow you would use is next."
     },
     {
       "id": "accessibility-audit",
