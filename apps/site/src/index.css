@@ -1,0 +1,160 @@
+/* Self-hosted fonts — vendored into /public/fonts so the site makes ZERO network
+   requests. No Google Fonts, no CDN. font-display:swap keeps text visible always. */
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/AtkinsonHyperlegible-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/AtkinsonHyperlegible-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OpenDyslexic-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/OpenDyslexic-Bold.woff2") format("woff2");
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ---- Light (default) ----
+     Contrast rationale (measured against WebAIM formula, documented in /accessibility):
+       ink        #2A2A33 on bg #F6F6F7  -> ~13.6:1
+       ink-muted  #5B6066 on bg #F6F6F7  -> ~5.3:1   (darkened from brand #8E9196, which fails)
+       lavender-ink #5F49BC on white      -> ~6.7:1   (all purple text + links)
+       lavender   #9b87f5                 -> fills / large display only, never body text */
+  :root {
+    --font-sans: "Atkinson Hyperlegible";
+
+    --bg: 240 10% 96%; /* #F6F6F7 off-white */
+    --surface: 0 0% 100%; /* white cards/bands */
+    --ink: 240 9% 18%; /* #2A2A33 */
+    --ink-muted: 217 6% 38%; /* #5B6066 */
+    --line: 253 40% 90%; /* soft lavender-tinted hairline */
+
+    --lavender-soft: 253 100% 96%;
+    --softblue: 214 94% 91%; /* #D3E4FD */
+    --softgreen: 90 79% 94%; /* #F2FCE2 */
+
+    --focus-ring: 253 82% 60%;
+    --danger: 2 71% 41%; /* #b3261e ~6.3:1 on white */
+  }
+
+  /* ---- Dark / low-stimulation ----
+     Deep desaturated indigo rather than pure black; lavender text lightened so it
+     still passes AA on the dark surface. */
+  :root.dark {
+    --bg: 240 14% 10%; /* ~#161620 */
+    --surface: 240 12% 14%; /* ~#1f1f2b */
+    --ink: 240 20% 92%; /* ~#e6e6f2 */
+    --ink-muted: 240 9% 68%; /* ~#a6a6b8 */
+    --line: 240 12% 24%;
+
+    --lavender-soft: 250 25% 22%;
+    --softblue: 214 40% 24%;
+    --softgreen: 120 20% 22%;
+
+    --focus-ring: 253 90% 78%;
+    --danger: 4 90% 76%; /* #f7a7a0-ish, light red for contrast on dark surface */
+  }
+
+  /* Visitor font toggle: OpenDyslexic swaps the family app-wide. */
+  :root.font-dyslexic {
+    --font-sans: "OpenDyslexic";
+  }
+
+  * {
+    border-color: hsl(var(--line));
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: hsl(var(--bg));
+    color: hsl(var(--ink));
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Visible, generous focus indicator on every interactive element. */
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 3px solid hsl(var(--focus-ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  h1, h2, h3, h4 {
+    color: hsl(var(--ink));
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  /* Kill scroll-behavior + all animation when the user (OS or our toggle) asks. */
+  :root.reduce-motion *,
+  :root.reduce-motion *::before,
+  :root.reduce-motion *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@layer components {
+  .measure {
+    max-width: 65ch;
+  }
+
+  /* Skip link — visually hidden until focused. */
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -100px;
+    z-index: 100;
+    background: hsl(var(--surface));
+    color: hsl(var(--lavender-ink, 253 45% 52%));
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    border: 2px solid #5f49bc;
+    transition: top 0.2s ease-out;
+  }
+  .skip-link:focus {
+    top: 1rem;
+  }
+}

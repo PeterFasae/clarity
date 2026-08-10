@@ -1,3 +1,7 @@
 node_modules
 dist
+.serverless
+*.tsbuildinfo
+.env
+.env.local
 .DS_Store

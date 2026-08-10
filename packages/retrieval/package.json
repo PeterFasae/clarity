@@ -1,0 +1,14 @@
+{
+  "name": "@clarity/retrieval",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The retrieval engine: summarise, extractActions, TF-IDF search. Plain ESM, zero dependencies, no build step — so the API, the app and the marketing site can all import the same implementation.",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js"
+  ]
+}

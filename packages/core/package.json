@@ -1,0 +1,26 @@
+{
+  "name": "@clarity/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The canonical data contract: one Note type, one Preferences type, one set of API request/response schemas. Imported by services/api, apps/web and the tests.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

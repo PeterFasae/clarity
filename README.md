@@ -1,87 +1,65 @@
 # Clarity
 
-A note-taking app built around getting things back out.
+A cloud note-taking platform for people with ADHD.
+
+Every note app assumes intact executive function — that you'll tag it, file it,
+name it well, and find it again. For someone with ADHD that assumption is the
+failure point, so Clarity inverts it: capture costs one keystroke and no
+decisions, summary and action items are computed on save rather than entered,
+and search matches what a note *says* rather than what you called it.
+
+*A cognitive ally, not a filing cabinet.* Capture was never the problem — getting
+it back out was.
+
+> **In development.** Nothing here is finished software yet.
+> [`docs/status.json`](docs/status.json) is the registry of what actually exists,
+> and no public copy may describe a feature in the present tense unless that file
+> says it's `built`.
+
+## Running it
 
 ```bash
 npm install
-npm run dev     # api on :3001, web on :5174
-npm test        # 25 tests on the retrieval pipeline
+npm test                     # the retrieval engine's 25 tests
+npm run build                # typecheck + build every workspace
+
+npm run dev -w apps/web      # the product SPA        → :8080
+npm run dev -w apps/site     # the marketing site     → :8081
+npm run dev -w services/api  # serverless offline     → :3000/dev
 ```
 
-## Why I built it
-
-My notes went in fast and never came back out. Most note apps quietly assume you will
-return later and organise them, and that assumption is where the whole thing failed for
-me: capture was never the problem, retrieval was.
-
-So the design question was not "how do I store this" but "what happens when I want it
-back in three weeks and cannot remember what I called it".
-
-## The three decisions
-
-**Capture is one keystroke.** `⌘N` focuses the box, `⌘↵` saves. Nothing to name, nothing
-to file, no folder to choose. A title is derived from the first line if you do not give
-one. Anything that added friction to writing something down was cut.
-
-**Summary and actions are computed, never entered.** Both are recomputed on every write,
-so there is one source of truth for what a note says and they cannot drift from it.
-Doing it on write rather than on read means the work happens once per edit instead of
-once per search.
-
-**Search matches the note, not the filename.** TF-IDF with cosine similarity over the
-title and body. The inverse document frequency is the part that earns its place: a word
-appearing in every note tells you nothing about which note you want, so it is weighted
-down automatically as the collection grows. Searching "why was the page slow" finds a
-note titled "Why the dashboard felt slow" without those words having to line up.
-
-## Architecture
+## Layout
 
 ```
-shared/retrieval.js   summarise, extractActions, search   (pure, tested)
-server/index.js       Express API over an in-memory store
-src/                  React front end
+packages/retrieval   summarise, extractActions, search — pure ESM, no deps, 25 tests
+packages/core        the canonical Note, Preferences and API contract
+services/api         Lambda + DynamoDB + Cognito
+apps/web             the product SPA
+apps/site            the marketing site — imports the engine, so its demo is the real thing
+docs/                the research report, the ADRs, the feature-status registry
 ```
 
-The interesting boundary is the store. Each handler is small and stateless apart from it,
-because in the deployed version each one is a Lambda behind API Gateway with DynamoDB
-underneath and Cognito in front. Swapping the `Map` for a DynamoDB client does not change
-the handlers. Keeping that seam honest is what made the AWS version a deployment detail
-rather than a rewrite.
+`packages/retrieval` is imported by all three consumers, which is the point:
+one implementation of relevance and summarisation, one test suite, no drift
+between what the demo shows and what the product does.
 
-The retrieval module has no dependencies and no I/O, which is why it can be unit tested
-rather than eyeballed. That is most of the value of the split.
+## Docs
+
+| | |
+|---|---|
+| [CONTEXT.md](CONTEXT.md) | What it is and why. The seven design rules, the eight settled decisions, claims discipline, the website spec. |
+| [ENGINEERING.md](ENGINEERING.md) | The engineering map. Workspace layout, the data contract, API routes, the inherited bugs not to reproduce. |
+| [BUILD.md](BUILD.md) | The phased spec and its acceptance criteria. |
+| [docs/decisions.md](docs/decisions.md) | ADRs for the non-obvious calls. |
+| [docs/status.json](docs/status.json) | What is built, in progress, or planned. |
 
 ## Honest limits
 
-Summarisation is **extractive**: it scores each sentence by how much of the note's own
-vocabulary it carries and keeps the best few in their original order. It cannot invent a
-fact that was not in the note, which for a notes app matters more than fluency. It is not
-a language model and does not paraphrase.
-
-Search is **lexical similarity**, not embeddings. It will not connect "invoice" to
-"billing" unless both words appear. The plan was always to swap the scorer for
-sentence embeddings behind the same `search()` interface, which is why the signature
-takes notes and returns scored hits rather than exposing the vector maths.
-
-Action extraction is **pattern-based** (`TODO:`, `- [ ]`, "I need to…", "Remember to…"),
-so it is predictable: you can learn what it will pick up. That was a deliberate choice
-over something cleverer and less legible.
-
-The stemmer is a small suffix stripper so "meeting" and "meetings" land on the same term.
-It is not a morphological analyser and does not pretend to be.
-
-## Tests
-
-25 tests on `shared/retrieval.js`, covering tokenising, sentence splitting, summary
-selection, all the action patterns, and search ranking. Two of them exist because of bugs
-found while building this:
-
-- the stemmer only stripped one suffix, so "meetings" became "meeting" and never reached
-  the same term as "meeting" itself
-- sentence splitting treated every newline as a sentence end, which cut hard-wrapped
-  prose in half and produced summaries that read like two fragments glued together
-
-## What this is
-
-My own project, and the note app I use. It grew out of my final-year project at
-Middlesex. This repository is the version rebuilt to be readable end to end.
+Summarisation is **extractive** — it scores each sentence by how much of the
+note's own vocabulary it carries and keeps the best few in their original order.
+It cannot invent a fact that was not in the note, which for a notes app matters
+more than fluency. Search is **lexical similarity**, not embeddings: it will not
+connect "invoice" to "billing" unless both words appear. Action extraction is
+**pattern-based** (`TODO:`, `- [ ]`, "I need to…", "Remember to…"), so it is
+predictable — you can learn what it will pick up. An optional LLM path sits
+behind a per-user flag that is off by default.

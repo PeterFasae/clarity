@@ -1,0 +1,119 @@
+service: clarity-api
+frameworkVersion: '3'
+
+plugins:
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: eu-north-1
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 10
+  architecture: arm64
+  environment:
+    NOTES_TABLE: ${self:service}-notes-${sls:stage}
+    PREFERENCES_TABLE: ${self:service}-preferences-${sls:stage}
+    # Comma-separated allowlist. Never a wildcard — respond.js echoes back only a
+    # matching Origin, so an unlisted origin gets no CORS header at all.
+    ALLOWED_ORIGINS: ${env:ALLOWED_ORIGINS, 'http://localhost:8080,http://localhost:8081'}
+  # Phase 1 adds: the Cognito user pool + API Gateway JWT authorizer on every
+  # route, the DynamoDB resources, and per-function least-privilege IAM roles
+  # (deleteNote gets DeleteItem and nothing else — report §4.3E).
+
+package:
+  individually: false
+  patterns:
+    - '!tests/**'
+    - '!node_modules/.cache/**'
+
+functions:
+  createNote:
+    handler: functions/createNote.handler
+    events:
+      - http:
+          path: notes
+          method: post
+
+  getNotes:
+    # One handler. Filters arrive as query params (?q=, ?filter=, ?limit=, ?cursor=).
+    # The predecessor mapped four routes at this handler and branched on
+    # event.path because the frontend never sent query params; that is gone.
+    handler: functions/getNotes.handler
+    events:
+      - http:
+          path: notes
+          method: get
+
+  getNote:
+    # Missing in the predecessor despite the frontend calling it.
+    handler: functions/getNote.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: get
+
+  updateNote:
+    handler: functions/updateNote.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: put
+
+  deleteNote:
+    handler: functions/deleteNote.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: delete
+
+  getNoteSummary:
+    handler: functions/getNoteSummary.handler
+    events:
+      - http:
+          path: notes/{id}/summary
+          method: get
+
+  summarizeNote:
+    # Force a recompute. ?mode=local|llm, subject to the user's aiEnabled.
+    handler: functions/summarizeNote.handler
+    events:
+      - http:
+          path: notes/{id}/summarize
+          method: post
+
+  getActions:
+    handler: functions/getActions.handler
+    events:
+      - http:
+          path: actions
+          method: get
+
+  getPreferences:
+    handler: functions/getPreferences.handler
+    events:
+      - http:
+          path: me/preferences
+          method: get
+
+  putPreferences:
+    handler: functions/putPreferences.handler
+    events:
+      - http:
+          path: me/preferences
+          method: put
+
+  exportMe:
+    handler: functions/exportMe.handler
+    events:
+      - http:
+          path: me/export
+          method: post
+
+  deleteMe:
+    handler: functions/deleteMe.handler
+    events:
+      - http:
+          path: me
+          method: delete
