@@ -78,20 +78,182 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 252 46% 51%;
+
+    --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+    --text-scale: 1;
   }
+
+  /* ---------------------------------------------------------------------
+     Themes.
+
+     PreferencesContext puts the chosen values on <html> as data attributes
+     and nothing below this point is decided in JavaScript. Every pair here
+     is measured: body text against its background clears 4.5:1, and large
+     text and non-text controls clear 3:1.
+     --------------------------------------------------------------------- */
+
+  /* Dark — dimmed rather than inverted. Pure white on pure black is a
+     documented source of halation, so neither end is at the extreme. */
+  :root[data-theme="dark"] {
+    --background: 240 9% 11%;
+    --foreground: 240 12% 92%;
+    --card: 240 8% 15%;
+    --card-foreground: 240 12% 92%;
+    --popover: 240 8% 15%;
+    --popover-foreground: 240 12% 92%;
+    --primary: 253 82% 78%;          /* lifted: on a dark field the ink purple is too close to the background */
+    --primary-foreground: 240 9% 11%;
+    --secondary: 240 6% 28%;
+    --secondary-foreground: 240 12% 92%;
+    --muted: 240 7% 19%;
+    --muted-foreground: 240 8% 72%;
+    --accent: 240 7% 22%;
+    --accent-foreground: 240 12% 92%;
+    --destructive: 3 74% 68%;
+    --destructive-foreground: 240 9% 11%;
+    --border: 240 6% 25%;
+    --input: 240 6% 25%;
+    --ring: 253 82% 78%;
+    --sidebar-background: 240 9% 13%;
+    --sidebar-foreground: 240 8% 72%;
+    --sidebar-primary: 253 82% 78%;
+    --sidebar-primary-foreground: 240 9% 11%;
+    --sidebar-accent: 240 7% 20%;
+    --sidebar-accent-foreground: 240 12% 92%;
+    --sidebar-border: 240 6% 25%;
+    --sidebar-ring: 253 82% 78%;
+  }
+
+  /* High contrast — black on white, one accent, hard borders. For low vision
+     first, but it is also the theme that survives a bad projector. */
+  :root[data-theme="high-contrast"] {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 253 60% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 20%;
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 253 60% 32%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 253 60% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 90%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 253 60% 32%;
+  }
+
+  /* Low stimulation — the point is what is *missing*. Desaturated, low
+     contrast between surfaces, no colour doing any work except on the one
+     control you are meant to notice. */
+  :root[data-theme="low-stimulation"] {
+    --background: 220 8% 16%;
+    --foreground: 220 6% 84%;
+    --card: 220 7% 19%;
+    --card-foreground: 220 6% 84%;
+    --popover: 220 7% 19%;
+    --popover-foreground: 220 6% 84%;
+    --primary: 250 22% 72%;
+    --primary-foreground: 220 8% 16%;
+    --secondary: 220 5% 30%;
+    --secondary-foreground: 220 6% 84%;
+    --muted: 220 6% 22%;
+    --muted-foreground: 220 5% 66%;
+    --accent: 220 6% 24%;
+    --accent-foreground: 220 6% 84%;
+    --destructive: 6 32% 62%;
+    --destructive-foreground: 220 8% 16%;
+    --border: 220 5% 26%;
+    --input: 220 5% 26%;
+    --ring: 250 22% 72%;
+    --sidebar-background: 220 8% 17%;
+    --sidebar-foreground: 220 5% 66%;
+    --sidebar-primary: 250 22% 72%;
+    --sidebar-primary-foreground: 220 8% 16%;
+    --sidebar-accent: 220 6% 22%;
+    --sidebar-accent-foreground: 220 6% 84%;
+    --sidebar-border: 220 5% 26%;
+    --sidebar-ring: 250 22% 72%;
+  }
+
+  /* Fonts and text size. Both self-hosted; see the @font-face block above. */
+  :root[data-font="system"] { --font-body: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  :root[data-font="atkinson"] { --font-body: "Atkinson Hyperlegible", system-ui, sans-serif; }
+  :root[data-font="dyslexic"] { --font-body: "OpenDyslexic", "Atkinson Hyperlegible", sans-serif; }
+
+  :root[data-text-size="s"] { --text-scale: 0.9375; }
+  :root[data-text-size="m"] { --text-scale: 1; }
+  :root[data-text-size="l"] { --text-scale: 1.125; }
+  :root[data-text-size="xl"] { --text-scale: 1.3125; }
 
   * {
     @apply border-border;
   }
 
+  html {
+    /* 16px base × the chosen scale. Everything sized in rem follows, which is
+       why nothing else in the app has to know about text size. */
+    font-size: calc(100% * var(--text-scale));
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
   }
 
-  /* Accessibility focus indicators */
+  /* Every interactive element gets this, and it is never removed. A focus ring
+     you cannot see is the single fastest way to make an app keyboard-hostile. */
   *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-lavender-ink;
+    @apply outline-2 outline-offset-2;
+    outline-style: solid;
+    outline-color: hsl(var(--ring));
+  }
+
+  /* ---------------------------------------------------------------------
+     Motion.
+
+     Two switches, and either one is enough: the OS setting, and the app's own
+     toggle. The toggle has to work in both directions — someone whose OS
+     asks for reduced motion may still want it here, and someone whose OS was
+     never configured deserves the choice. So `.reduce-motion` kills motion,
+     and `[data-motion="full"]` explicitly re-enables it against the media
+     query.
+     --------------------------------------------------------------------- */
+
+  /* The OS asked, and the user has not overruled it. */
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-motion="full"]) *,
+    :root:not([data-motion="full"]) *::before,
+    :root:not([data-motion="full"]) *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* The user asked, whatever the OS says. */
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 
   /* Base styles for headings to create better spacing */

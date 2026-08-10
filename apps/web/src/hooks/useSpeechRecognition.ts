@@ -1,104 +1,131 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useState, useEffect, useCallback } from 'react';
+/**
+ * Dictation, via the Web Speech API.
+ *
+ * In practice this means Chrome and Edge. Everywhere else `supported` comes
+ * back false and the caller shows the text path instead — the rule is that
+ * there is never a microphone button that does nothing when you press it. A
+ * dead control is worse than an absent one, especially for someone who will
+ * read the failure as their own.
+ *
+ * `transcript` is the finalised text; `interim` is what the engine currently
+ * thinks it is hearing, which is worth showing because watching your own voice
+ * become text is the moment this feature earns its place.
+ */
 
-interface SpeechRecognitionHook {
-  text: string;
-  isListening: boolean;
+interface SpeechRecognitionApi {
+  supported: boolean;
+  listening: boolean;
+  transcript: string;
+  interim: string;
   error: string | null;
-  startListening: () => void;
-  stopListening: () => void;
-  resetText: () => void;
-  browserSupportsSpeechRecognition: boolean;
+  start: () => void;
+  stop: () => void;
+  reset: () => void;
 }
 
-const useSpeechRecognition = (): SpeechRecognitionHook => {
-  const [text, setText] = useState('');
-  const [isListening, setIsListening] = useState(false);
+function constructor(): SpeechRecognitionConstructor | undefined {
+  if (typeof window === 'undefined') return undefined;
+  return window.SpeechRecognition ?? window.webkitSpeechRecognition;
+}
+
+export function useSpeechRecognition(): SpeechRecognitionApi {
+  const [supported] = useState(() => Boolean(constructor()));
+  const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [interim, setInterim] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
-  const [browserSupportsSpeechRecognition, setBrowserSupportsSpeechRecognition] = useState(false);
+
+  const recognition = useRef<SpeechRecognition | null>(null);
+  // Held in a ref as well, so a restart appends rather than starting over.
+  const finalised = useRef('');
 
   useEffect(() => {
-    // Check if browser supports the Web Speech API
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognitionAPI();
-      
-      recognitionInstance.continuous = true;
-      recognitionInstance.interimResults = true;
-      recognitionInstance.lang = 'en-US';
-      
-      recognitionInstance.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0])
-          .map(result => result.transcript)
-          .join('');
-        
-        setText(transcript);
-      };
-      
-      recognitionInstance.onerror = (event) => {
-        setError(event.error);
-        setIsListening(false);
-      };
-      
-      recognitionInstance.onend = () => {
-        setIsListening(false);
-      };
-      
-      setRecognition(recognitionInstance);
-      setBrowserSupportsSpeechRecognition(true);
-    } else {
-      setError('Your browser does not support speech recognition.');
-      setBrowserSupportsSpeechRecognition(false);
-    }
+    const Recognition = constructor();
+    if (!Recognition) return;
 
-    // Cleanup function to prevent memory leaks
+    const instance = new Recognition();
+    instance.continuous = true;
+    instance.interimResults = true;
+    instance.lang = navigator.language || 'en-GB';
+
+    instance.onresult = (event: SpeechRecognitionEvent) => {
+      let pending = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const text = result[0].transcript;
+        if (result.isFinal) finalised.current += text;
+        else pending += text;
+      }
+
+      setTranscript(finalised.current);
+      setInterim(pending);
+    };
+
+    instance.onerror = (event: SpeechRecognitionErrorEvent) => {
+      setListening(false);
+      setError(readableError(event.error));
+    };
+
+    instance.onend = () => {
+      setListening(false);
+      setInterim('');
+    };
+
+    recognition.current = instance;
+
     return () => {
-      if (recognition) {
-        recognition.onresult = null;
-        recognition.onend = null;
-        recognition.onerror = null;
-        if (isListening) {
-          recognition.stop();
-        }
+      instance.onresult = null;
+      instance.onerror = null;
+      instance.onend = null;
+      try {
+        instance.abort();
+      } catch {
+        // Already stopped. Nothing to do.
       }
     };
   }, []);
 
-  const startListening = useCallback(() => {
+  const start = useCallback(() => {
     setError(null);
-    if (recognition) {
-      try {
-        recognition.start();
-        setIsListening(true);
-      } catch (error) {
-        // Handles the case where recognition is already started
-        console.error('Speech recognition error:', error);
-      }
+    try {
+      recognition.current?.start();
+      setListening(true);
+    } catch {
+      // start() throws if it is already running, which is harmless.
+      setListening(true);
     }
-  }, [recognition]);
-
-  const stopListening = useCallback(() => {
-    if (recognition && isListening) {
-      recognition.stop();
-      setIsListening(false);
-    }
-  }, [recognition, isListening]);
-
-  const resetText = useCallback(() => {
-    setText('');
   }, []);
 
-  return {
-    text,
-    isListening,
-    error,
-    startListening,
-    stopListening,
-    resetText,
-    browserSupportsSpeechRecognition
-  };
-};
+  const stop = useCallback(() => {
+    recognition.current?.stop();
+    setListening(false);
+  }, []);
 
-export default useSpeechRecognition;
+  const reset = useCallback(() => {
+    finalised.current = '';
+    setTranscript('');
+    setInterim('');
+  }, []);
+
+  return { supported, listening, transcript, interim, error, start, stop, reset };
+}
+
+/** The browser's error codes, said the way a person would say them. */
+function readableError(code: string): string {
+  switch (code) {
+    case 'not-allowed':
+    case 'service-not-allowed':
+      return 'Your browser is blocking the microphone. Allow it in the address bar, or just type instead.';
+    case 'no-speech':
+      return "Didn't catch anything. Try again, or type instead.";
+    case 'audio-capture':
+      return 'No microphone found. You can type instead.';
+    case 'network':
+      return 'Dictation needs a connection and could not reach it. Typing still works.';
+    default:
+      return 'Dictation stopped unexpectedly. You can type instead — nothing was lost.';
+  }
+}

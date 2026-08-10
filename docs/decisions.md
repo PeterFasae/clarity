@@ -285,3 +285,102 @@ builds both tables from `serverless.yml` first, on the stage and port
 `apps/web` already defaults to. It imports the same setup module the
 integration tests use rather than keeping a second copy, so "it passed the
 tests" and "it works in the app" cannot come apart.
+
+---
+
+## Phase 2 — the ADHD product layer
+
+### 2.1 — The app's whole data layer was replaced, not adapted
+
+`notesService.ts` and `NotesContext.tsx` spoke the predecessor's broken shape —
+`isPinned`, `isArchived`, `isShared`, no auth, no search, four hardcoded list
+endpoints — and every one of those is a bug in ENGINEERING.md's inherited-bugs
+table. Adapting them would have meant keeping a translation layer between two
+note shapes, which is precisely the thing `packages/core` exists to abolish. They
+are deleted. `src/lib/api.ts` types every call from `@clarity/core`, so the
+server's shape and the client's expectation cannot drift apart without it being
+a compile error. `Layout`, `Sidebar`, `NotesList`, `SpeechToText` and
+`TagsManager` went with them; `components/ui/` is untouched.
+
+### 2.2 — A local sign-in for development, compiled out of production
+
+Phase 1 stood up a Cognito pool but there is no deployed stage, so without
+something the app could not run at all. `VITE_LOCAL_AUTH=true` signs in against
+a locally-derived identity and mints an unsigned token, which works because
+`serverless offline` does not verify signatures — API Gateway does that, before
+a Lambda is ever invoked. Two locks: the env var, and `import.meta.env.DEV`,
+which is false in a production build, so Vite removes the branch. A token minted
+this way is rejected by the real gateway regardless.
+
+### 2.3 — The Cognito SDK is loaded on demand
+
+`amazon-cognito-identity-js` is 90KB and expects Node's `global`, which crashed
+the app on first load. It is now behind a dynamic import, so a local build never
+touches it and a deployed one fetches it only when a real sign-in happens. The
+main bundle came down from 509KB to 419KB as a side effect.
+
+### 2.4 — Preferences: the server wins on sign-in, localStorage covers the rest
+
+`localStorage` is read synchronously on first paint, so the interface is already
+in the right theme, font and size before anything renders — landing in the wrong
+one and having it change underneath you is exactly the kind of jolt this product
+exists to avoid. Once signed in, whatever the account holds replaces it, because
+that is what "set it once and it follows you" has to mean. Writes go to both,
+debounced by 600ms so a run of clicks is one request. No cookies, so no banner.
+
+### 2.5 — Motion has two switches and either one is enough
+
+`prefers-reduced-motion` alone is not sufficient: someone whose OS was never
+configured still deserves the choice, and someone whose OS asks for less motion
+may still want it here. So the media query is scoped to
+`:root:not([data-motion="full"])` and the in-app toggle also sets a
+`.reduce-motion` class. The OS asks; the toggle overrules, in both directions.
+
+### 2.6 — Ticking off an action edits the note
+
+Actions are derived from what a note says and are never stored separately, so
+there is nowhere to record "done" except the note itself. Completing one appends
+a marker to the line it came from. The alternative — a second table of completion
+state — is how the list and the note start disagreeing, and the whole reason
+actions are derived is that they cannot.
+
+### 2.7 — The focus-mode timer counts up and nothing happens when it stops
+
+Ported straight from the marketing site, which already had Esc, the focus trap,
+focus restoration, an `inert` backdrop and the announcements. The one addition is
+a timer, and it counts up rather than down. A countdown that runs out is a small
+failure event, and design rule 6 rules out anything that works by making you feel
+behind.
+
+### 2.8 — Reminders are honest about what they are not
+
+They fire from an interval while the tab is open, and the UI says so in as many
+words: no service worker, no push, nothing reaches a closed browser or a phone.
+A reminder you believe in and that does not arrive is worse than no reminder,
+and this audience has been let down by exactly that before. A missed one is also
+not replayed on next open — a wall of overdue notifications is its own kind of
+harm.
+
+### 2.9 — What was verified, and how
+
+Against the local rig, in the browser:
+
+- ⌘↵ in the capture box saved a note with a derived title, both actions
+  extracted, no other input required.
+- **Content is byte-identical after summarising** — checked against the API
+  rather than the UI, as the criterion asks.
+- Search found a note by "queue", a word that appears only in the body.
+- Preferences written through the API appeared in the app after a reload:
+  high-contrast applied, text size `l` resolved to an 18px root. That is the
+  two-client criterion.
+- Focus mode: Esc exited, focus returned to the trigger, the backdrop carried
+  both `inert` and `aria-hidden`, and entering and leaving were announced.
+- The motion toggle took a 500ms transition to 0.01ms and back, on a machine
+  whose OS does not ask for reduced motion.
+- All 24 enabled focusable elements on the notes screen are reachable, every one
+  has an accessible name, and every one has a visible focus ring.
+
+Not verified here: the OS→reduced-motion direction, which needs the media query
+emulated rather than a class toggled, and the full keyboard walkthrough on a
+real screen reader. Both belong to the Phase 3 audit, and neither is claimed as
+done.

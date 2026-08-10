@@ -1,22 +1,23 @@
 {
   "$comment": "The single registry of what actually exists. Both apps/web and apps/site read it, so a 'Coming soon' label cannot rot after a feature ships or slips. status is built | in-progress | planned. Public copy may only describe a feature in the PRESENT TENSE when its status is 'built' — see CONTEXT.md §6. Update this file in the same commit as any change to what a feature does.",
   "updated": "2026-08-10",
-  "phase": "1 — data, auth and API complete and tested locally; not yet deployed. Phase 2 (the ADHD product layer) is next.",
+  "phase": "2 — the product layer is built and works end to end against the local API. Nothing is deployed yet, so nothing here is marked built.",
   "features": [
     {
       "id": "quick-capture",
       "name": "Quick capture",
       "group": "capture",
-      "status": "planned",
-      "publicCopy": "A thought, saved in seconds — no title, no folder, no decision."
+      "status": "in-progress",
+      "publicCopy": "A thought, saved in seconds — no title, no folder, no decision.",
+      "note": "Built: ⌘N focuses the box from anywhere, ⌘↵ saves, the title comes from the first line. Not deployed yet, so you cannot use it."
     },
     {
       "id": "voice-capture",
       "name": "Voice to text",
       "group": "capture",
-      "status": "planned",
+      "status": "in-progress",
       "publicCopy": "Speak instead of type when typing feels like too much. Your words become editable text as you go.",
-      "note": "Works in the demo on this site, in browsers that support the Web Speech API. Not yet in the app."
+      "note": "Built into the capture box, in browsers that support it; elsewhere the control is absent and the reason is stated. Not deployed yet."
     },
     {
       "id": "light-structure",
@@ -31,7 +32,7 @@
       "group": "understand",
       "status": "in-progress",
       "publicCopy": "Turn a long, messy note into its key points, so review is possible even at low attention. The original is always kept.",
-      "note": "The summariser runs on the server on every save, and you can try it in the demo on this site. The panel that shows it to you is next."
+      "note": "Computed on save, shown above the note with the original untouched underneath, and labelled with which engine wrote it. Not deployed yet."
     },
     {
       "id": "action-items",
@@ -39,7 +40,7 @@
       "group": "understand",
       "status": "in-progress",
       "publicCopy": "Pull the “I need to email Sam” out of a wall of notes and turn it into something you can act on.",
-      "note": "Extraction runs on save and the server can list every action across your notes. The list view is next."
+      "note": "Extracted on save and gathered into one list across every note, each linking back. Not deployed yet."
     },
     {
       "id": "suggested-tags",
@@ -52,8 +53,9 @@
       "id": "listen-back",
       "name": "Listen back",
       "group": "understand",
-      "status": "planned",
-      "publicCopy": "Play a note aloud instead of reading it, for the times reading is the hard part."
+      "status": "in-progress",
+      "publicCopy": "Play a note aloud instead of reading it, for the times reading is the hard part.",
+      "note": "Reads a note or its summary aloud where the browser supports it. Not deployed yet."
     },
     {
       "id": "search",
@@ -61,7 +63,7 @@
       "group": "organise",
       "status": "in-progress",
       "publicCopy": "Search matches what a note says, not what you happened to call it.",
-      "note": "Search runs on the server across your own notes and returns a relevance score. The search box is next."
+      "note": "Runs across your own notes and shows how strong each match is. Not deployed yet."
     },
     {
       "id": "pin-archive-tag",
@@ -69,14 +71,15 @@
       "group": "organise",
       "status": "in-progress",
       "publicCopy": "Lightweight triage for the notes that matter now versus later.",
-      "note": "The API stores and filters on these. The controls in the app are next."
+      "note": "All three work against the real fields, with filter views. Not deployed yet."
     },
     {
       "id": "reminders",
       "name": "Reminders",
       "group": "organise",
-      "status": "planned",
-      "publicCopy": "Gentle nudges tied to what a note is about — not another wall of red badges."
+      "status": "in-progress",
+      "publicCopy": "Gentle nudges tied to what a note is about — not another wall of red badges.",
+      "note": "Due dates on a note, raising a browser notification while Clarity is open in a tab. No push, so nothing reaches a closed browser or a phone."
     },
     {
       "id": "sharing",
@@ -89,32 +92,33 @@
       "id": "readable-fonts",
       "name": "Readable fonts",
       "group": "adapt",
-      "status": "planned",
+      "status": "in-progress",
       "publicCopy": "A legibility-first default face, with OpenDyslexic one tap away.",
-      "note": "Both fonts are live on this site — try the toggles in the footer. Not yet in the app."
+      "note": "Atkinson Hyperlegible and OpenDyslexic, both self-hosted, switchable in settings. Not deployed yet."
     },
     {
       "id": "calm-themes",
       "name": "Calm themes",
       "group": "adapt",
-      "status": "planned",
-      "publicCopy": "Light, dark, high-contrast, and a low-stimulation mode — match the interface to what you can handle right now."
+      "status": "in-progress",
+      "publicCopy": "Light, dark, high-contrast, and a low-stimulation mode — match the interface to what you can handle right now.",
+      "note": "All four themes are built and switchable. The full contrast audit across them is still to come."
     },
     {
       "id": "focus-mode",
       "name": "Focus mode",
       "group": "adapt",
-      "status": "planned",
+      "status": "in-progress",
       "publicCopy": "One note, nothing else on screen.",
-      "note": "Live in the demo on the home page. The version inside the app is a port of that same component."
+      "note": "Built: one note, everything else gone, Esc to leave, with an optional count-up timer. Not deployed yet."
     },
     {
       "id": "motion-control",
       "name": "Motion off",
       "group": "adapt",
-      "status": "planned",
+      "status": "in-progress",
       "publicCopy": "Turn off animation entirely, whatever your operating system is set to.",
-      "note": "Live on this site — the toggle is in the footer. Not yet in the app."
+      "note": "Built, and it overrides the operating system in both directions. Not deployed yet."
     },
     {
       "id": "preferences-sync",
@@ -122,7 +126,7 @@
       "group": "adapt",
       "status": "in-progress",
       "publicCopy": "Set the interface once and it follows you to every device.",
-      "note": "Preferences are stored per account and follow you across devices. Wiring the settings panel to them is next."
+      "note": "Every setting is stored per account and adopted on any device you sign in on. Not deployed yet."
     },
     {
       "id": "accounts",
@@ -130,7 +134,7 @@
       "group": "platform",
       "status": "in-progress",
       "publicCopy": "Your own account, with your notes visible only to you.",
-      "note": "Accounts, ownership and per-account isolation are built and tested on the server. Sign-up and sign-in screens are next."
+      "note": "Sign-up, sign-in and confirmation are built against Cognito. Not deployed yet."
     },
     {
       "id": "cloud-sync",
@@ -160,7 +164,7 @@
       "group": "platform",
       "status": "in-progress",
       "publicCopy": "Download every note and setting you have, as plain JSON, whenever you want.",
-      "note": "The API returns every note and setting as JSON. A button you can press is next."
+      "note": "A button that downloads every note and setting as JSON. Not deployed yet."
     },
     {
       "id": "account-deletion",
@@ -168,7 +172,7 @@
       "group": "platform",
       "status": "in-progress",
       "publicCopy": "Delete your account and everything in it, in one action.",
-      "note": "The API deletes every note and setting in one call, and requires an explicit confirmation. The flow you would use is next."
+      "note": "Built, behind an explicit confirmation. Not deployed yet."
     },
     {
       "id": "accessibility-audit",

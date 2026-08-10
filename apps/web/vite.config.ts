@@ -10,6 +10,9 @@ export default defineConfig({
     port: 8080,
   },
   plugins: [react()],
+  // The Cognito SDK reaches for Node's `global`. It is only loaded when a real
+  // sign-in happens, but the shim has to exist for when it is.
+  define: { global: 'globalThis' },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

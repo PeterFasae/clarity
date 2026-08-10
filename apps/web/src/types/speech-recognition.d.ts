@@ -61,7 +61,9 @@ interface SpeechRecognitionConstructor {
 // into a module, which module-scopes every interface above it — which is why
 // `SpeechRecognition` was an unresolved name and the app never noticed: the old
 // build script was `vite build` with no typecheck in front of it.
+// Optional on purpose: outside Chrome and Edge these are genuinely absent, and
+// the type should say so rather than let a caller assume a microphone exists.
 interface Window {
-  SpeechRecognition: SpeechRecognitionConstructor;
-  webkitSpeechRecognition: SpeechRecognitionConstructor;
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
 }
