@@ -26,9 +26,9 @@ export const handler = withAuth(async (event, userId) => {
   assertOwnership(note, userId);
 
   const preferences = (await getPreferences(userId)) ?? DEFAULT_PREFERENCES;
-  const engine = selectEngine(preferences, mode);
+  const engine = await selectEngine(preferences, mode);
 
-  const recomputed = enrich(note, engine);
+  const recomputed = await enrich(note, engine);
   await putNote(recomputed);
 
   return ok(event, { note: toWireNote(recomputed) });

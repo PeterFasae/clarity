@@ -130,4 +130,5 @@ export const ERROR_CODES = {
   notFound: 'not_found', // 404
   validationFailed: 'validation_failed', // 422
   aiDisabled: 'ai_disabled', // 409 — llm mode asked for with aiEnabled false
+  consentRequired: 'consent_required', // 422 — aiEnabled true with no consent on record
 } as const;

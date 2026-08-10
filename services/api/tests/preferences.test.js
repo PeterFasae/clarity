@@ -12,6 +12,7 @@ describe('preferences', () => {
       textSize: 'm',
       motion: 'full',
       aiEnabled: false,
+      aiConsentedAt: null,
     });
   });
 

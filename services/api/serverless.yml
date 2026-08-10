@@ -47,6 +47,17 @@ provider:
     ALLOWED_ORIGINS: ${env:ALLOWED_ORIGINS, 'http://localhost:8080,http://localhost:8081'}
     # Set only in local development, to point the SDK at DynamoDB Local.
     DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, ''}
+    # Phase 3. Absent means the LLM engine is unavailable and every request is
+    # answered locally, which is also the correct behaviour for a deployment
+    # that has not opted in. Encrypted at rest (report §4.3E).
+    ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
+    # Only ever set in tests, to point the SDK at a local recorder rather than
+    # at Anthropic.
+    ANTHROPIC_BASE_URL: ${env:ANTHROPIC_BASE_URL, ''}
+    # How long a save is willing to wait on the LLM before answering locally.
+    # Must stay comfortably under the function timeout above — the fallback is
+    # only a guarantee if it has time to run.
+    ANTHROPIC_TIMEOUT_MS: ${env:ANTHROPIC_TIMEOUT_MS, '6000'}
 
 package:
   individually: false
@@ -64,6 +75,10 @@ functions:
       - Effect: Allow
         Action: [dynamodb:PutItem]
         Resource: ${self:custom.notesTableArn}
+      # Reads the account's own aiEnabled, so a save uses the engine the user chose.
+      - Effect: Allow
+        Action: [dynamodb:GetItem]
+        Resource: ${self:custom.preferencesTableArn}
     events:
       - http:
           path: notes
@@ -107,6 +122,9 @@ functions:
       - Effect: Allow
         Action: [dynamodb:GetItem, dynamodb:PutItem]
         Resource: ${self:custom.notesTableArn}
+      - Effect: Allow
+        Action: [dynamodb:GetItem]
+        Resource: ${self:custom.preferencesTableArn}
     events:
       - http:
           path: notes/{id}

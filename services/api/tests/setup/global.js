@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
+import { startAnthropicRecorder } from './anthropic-recorder.js';
 import { CreateTableCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 /**
@@ -26,6 +27,7 @@ const JAR_DIR = path.join(SERVICE_ROOT, '.dynamodb');
 export const DDB_PORT = Number(process.env.RIG_DDB_PORT ?? 8123);
 export const API_PORT = Number(process.env.RIG_API_PORT ?? 3999);
 export const LAMBDA_PORT = Number(process.env.RIG_LAMBDA_PORT ?? 3998);
+export const ANTHROPIC_PORT = Number(process.env.RIG_ANTHROPIC_PORT ?? 3997);
 export const STAGE = process.env.RIG_STAGE ?? 'test';
 export const API_BASE = `http://localhost:${API_PORT}/${STAGE}`;
 export const ALLOWED_ORIGIN = 'http://localhost:8080';
@@ -42,6 +44,12 @@ const CHILD_ENV = {
   AWS_SECRET_ACCESS_KEY: 'local',
   DYNAMODB_ENDPOINT: `http://localhost:${DDB_PORT}`,
   ALLOWED_ORIGINS: ALLOWED_ORIGIN,
+  // Points the Anthropic SDK at the local recorder. A key has to be present or
+  // the engine reports itself unconfigured and never attempts a call — which
+  // would make the zero-calls test pass for the wrong reason.
+  ANTHROPIC_API_KEY: 'sk-ant-test-not-a-real-key',
+  ANTHROPIC_BASE_URL: `http://localhost:${ANTHROPIC_PORT}`,
+  ANTHROPIC_TIMEOUT_MS: '1500',
 };
 
 async function waitFor(check, { label, timeoutMs = 90_000, intervalMs = 400 }) {
@@ -102,17 +110,25 @@ async function createTables() {
   ];
 
   for (const [properties, tableName] of tables) {
-    await client.send(
-      new CreateTableCommand({
-        TableName: tableName,
-        AttributeDefinitions: properties.AttributeDefinitions,
-        KeySchema: properties.KeySchema,
-        BillingMode: properties.BillingMode,
-        ...(properties.GlobalSecondaryIndexes
-          ? { GlobalSecondaryIndexes: properties.GlobalSecondaryIndexes }
-          : {}),
-      }),
-    );
+    try {
+      await client.send(
+        new CreateTableCommand({
+          TableName: tableName,
+          AttributeDefinitions: properties.AttributeDefinitions,
+          KeySchema: properties.KeySchema,
+          BillingMode: properties.BillingMode,
+          ...(properties.GlobalSecondaryIndexes
+            ? { GlobalSecondaryIndexes: properties.GlobalSecondaryIndexes }
+            : {}),
+        }),
+      );
+    } catch (error) {
+      // A stray DynamoDB Local left running from an earlier session already has
+      // these tables. That is fine — but it should read as one line, not as a
+      // hundred-line SDK error dump.
+      if (error.name !== 'ResourceInUseException') throw error;
+      console.warn(`Table ${tableName} already exists; reusing it.`);
+    }
   }
 
   client.destroy();
@@ -145,13 +161,19 @@ function startServerlessOffline() {
   // Kept so a startup failure reports what actually went wrong rather than a
   // bare "timed out".
   let output = '';
-  child.stdout.on('data', (chunk) => (output += chunk));
-  child.stderr.on('data', (chunk) => (output += chunk));
+  const record = (chunk) => {
+    output += chunk;
+    // RIG_VERBOSE=1 surfaces the API's own logs while debugging a test.
+    if (process.env.RIG_VERBOSE) process.stderr.write(chunk);
+  };
+  child.stdout.on('data', record);
+  child.stderr.on('data', record);
 
   return { child, readOutput: () => output };
 }
 
 export default async function setup() {
+  const anthropic = await startAnthropicRecorder(ANTHROPIC_PORT);
   const dynamo = startDynamoLocal();
 
   await waitFor(
@@ -186,11 +208,13 @@ export default async function setup() {
   } catch (error) {
     dynamo.kill('SIGKILL');
     offline.child.kill('SIGKILL');
+    anthropic.close();
     throw new Error(`${error.message}\n\n--- serverless offline output ---\n${offline.readOutput()}`);
   }
 
   return async () => {
     offline.child.kill('SIGTERM');
     dynamo.kill('SIGKILL');
+    anthropic.close();
   };
 }

@@ -35,6 +35,17 @@ export const PreferencesSchema = z.object({
    * system, and that is a claim worth being able to make.
    */
   aiEnabled: z.boolean(),
+
+  /**
+   * When the user accepted the consent copy, or null if they never have.
+   *
+   * This exists so "they were shown the consent screen" is a fact on the record
+   * rather than a claim about the UI. The server refuses to set `aiEnabled`
+   * true without it, which means a client cannot enable AI assistance by
+   * accident, and a request that tries is a validation error rather than a
+   * quiet opt-in.
+   */
+  aiConsentedAt: z.string().datetime().nullable(),
 });
 export type Preferences = z.infer<typeof PreferencesSchema>;
 
@@ -44,7 +55,20 @@ export const DEFAULT_PREFERENCES: Preferences = {
   textSize: 'm',
   motion: 'full',
   aiEnabled: false,
+  aiConsentedAt: null,
 };
+
+/**
+ * The rule the API enforces on `PUT /me/preferences`: AI assistance cannot be
+ * switched on unless consent is on the record — either already stored, or
+ * supplied in the same request.
+ */
+export function aiMayBeEnabled(
+  stored: Pick<Preferences, 'aiConsentedAt'>,
+  update: Partial<Preferences>,
+): boolean {
+  return Boolean(update.aiConsentedAt ?? stored.aiConsentedAt);
+}
 
 /** Every field optional — PUT /me/preferences accepts a partial update. */
 export const PreferencesUpdateSchema = PreferencesSchema.partial();

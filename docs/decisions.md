@@ -384,3 +384,74 @@ Not verified here: the OS→reduced-motion direction, which needs the media quer
 emulated rather than a class toggled, and the full keyboard walkthrough on a
 real screen reader. Both belong to the Phase 3 audit, and neither is claimed as
 done.
+
+---
+
+## Phase 3 — trust, AI, and launch
+
+### 3.1 — The engine interface gained `analyse()`, and `enrich()` uses it
+
+ENGINEERING.md specifies `{ name, summarise, extractActions, suggestTags }`.
+Against a local engine that is three cheap function calls; against an LLM it is
+three round trips for one note, at triple the cost and latency — and worse, the
+summary and the actions could come back disagreeing about what the note says,
+which is the exact drift `enrich()` exists to prevent. Both engines now also
+implement `analyse(text) → { summary, actions, tags }`, and `enrich()` calls
+that. The three named methods remain, implemented in terms of it, so a caller
+that wants only a summary is unchanged.
+
+### 3.2 — A save uses the account's engine, not always the local one
+
+`selectEngine` with no explicit mode returns the LLM when the account has
+`aiEnabled` set. The alternative — local on write, LLM only on an explicit
+button — keeps capture instant, but it makes the preference do nothing until
+you press something else, which is a confusing product for a feature whose
+whole point is "my summaries get better". The cost is real and is stated here:
+with the flag on, `createNote` waits on the LLM. It is bounded by
+`ANTHROPIC_TIMEOUT_MS` (6s by default) and falls back locally, so the worst case
+is a slow save rather than a failed one. **Phase 1's p95 < 350ms latency gate
+was measured with the flag off, which is the default and the state the
+overwhelming majority of accounts will be in.** A deployed run with the flag on
+is a separate measurement and has not been taken.
+
+### 3.3 — Consent is a stored timestamp the server checks, not a screen we promise to show
+
+`Preferences` gained `aiConsentedAt`. `PUT /me/preferences` refuses
+`aiEnabled: true` with a 422 unless a consent timestamp is already stored or
+supplied in the same request. That turns "the user was shown the consent copy"
+into something the server verified rather than something the UI claims, and it
+means the flag cannot be switched on by a stray request or a well-meaning
+client that skipped the screen. The copy itself leads with the sentence that
+matters — that the text of every note is sent to another company — rather than
+burying it under benefits.
+
+### 3.4 — The SDK's zod helper wants zod 4; the contract package is on zod 3
+
+`zodOutputFormat` reads zod 4's internals and threw `Cannot read properties of
+undefined (reading 'def')` against the zod 3 this workspace uses. Upgrading
+`packages/core`'s validator — the file that defines the whole data contract —
+to satisfy a formatting helper is the wrong way round. The JSON Schema is
+written out by hand for the request, and a zod schema validates the response.
+Worth noting how this surfaced: the note still saved, with a local summary,
+because the fallback did exactly what it exists to do. The failure was only
+visible in the logs, which is the correct outcome for a user and the wrong one
+for a developer — hence `RIG_VERBOSE=1` on the test rig.
+
+### 3.5 — Proving a negative: a recorder, not a mock
+
+The acceptance criterion is "with `aiEnabled: false`, zero outbound calls to
+Anthropic — prove it with a test that fails if one is made." Mocking the SDK
+would only prove the mock was not called. Instead `ANTHROPIC_BASE_URL` points at
+a small HTTP recorder inside the test rig, so any request the API makes — by any
+path, intended or not — is counted. `tests/ai.test.js` exercises create, update,
+summarize, search, actions and export with the flag off and asserts the count is
+exactly zero. The tests immediately after turn the flag on and assert the count
+goes up, because a zero that could never be anything else proves nothing.
+
+### 3.6 — The timeout knob had to be declared, and the test caught it
+
+`ANTHROPIC_TIMEOUT_MS` was read from the environment but not declared in
+`serverless.yml`, so the Lambda never saw the rig's 1500ms override and fell
+back after the 6000ms default instead. The hang test failed on the elapsed-time
+assertion, which is exactly what it was for. Declared alongside the other
+environment config.

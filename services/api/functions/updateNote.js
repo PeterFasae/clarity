@@ -1,7 +1,7 @@
 import { UpdateNoteRequestSchema, deriveTitle } from '@clarity/core';
-import { localEngine } from '../lib/ai/index.js';
+import { selectEngine } from '../lib/ai/index.js';
 import { assertOwnership } from '../lib/auth.js';
-import { getNote, putNote } from '../lib/dynamo.js';
+import { getNote, getPreferences, putNote } from '../lib/dynamo.js';
 import { enrich } from '../lib/enrich.js';
 import { NotFoundError } from '../lib/errors.js';
 import { parseBody, withAuth } from '../lib/handler.js';
@@ -30,7 +30,8 @@ export const handler = withAuth(async (event, userId) => {
     ...(body.reminders !== undefined ? { reminders: body.reminders } : {}),
   };
 
-  const note = enrich(merged, localEngine);
+  const engine = await selectEngine(await getPreferences(userId));
+  const note = await enrich(merged, engine);
   await putNote(note);
   return ok(event, { note: toWireNote(note) });
 });

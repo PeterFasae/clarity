@@ -1,7 +1,7 @@
 {
   "$comment": "The single registry of what actually exists. Both apps/web and apps/site read it, so a 'Coming soon' label cannot rot after a feature ships or slips. status is built | in-progress | planned. Public copy may only describe a feature in the PRESENT TENSE when its status is 'built' — see CONTEXT.md §6. Update this file in the same commit as any change to what a feature does.",
   "updated": "2026-08-10",
-  "phase": "2 — the product layer is built and works end to end against the local API. Nothing is deployed yet, so nothing here is marked built.",
+  "phase": "3 in progress — the AI seam is built and tested; the accessibility audit, the accessibility statement, the marketing-site finish and the deploy are still ahead. Nothing is deployed, so nothing here is marked built.",
   "features": [
     {
       "id": "quick-capture",
@@ -155,8 +155,9 @@
       "id": "ai-assist",
       "name": "AI assistance",
       "group": "platform",
-      "status": "planned",
-      "publicCopy": "Optional, off by default. Turn it on and your note text is sent to Anthropic to produce a stronger summary; leave it off and nothing ever leaves our servers."
+      "status": "in-progress",
+      "publicCopy": "Optional, off by default. Turn it on and your note text is sent to Anthropic to produce a stronger summary; leave it off and nothing ever leaves our servers.",
+      "note": "Built on the server, behind a consent screen and off by default. There is a test that fails if a single request reaches Anthropic while it is off, and another that proves a note still saves when Anthropic is unavailable. Not deployed yet."
     },
     {
       "id": "data-export",

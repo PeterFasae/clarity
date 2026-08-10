@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import type { Font, Motion, TextSize, Theme } from '@clarity/core';
 import { Button } from '@/components/ui/button';
+import { AiConsent } from '@/components/AiConsent';
 import { usePreferences } from '@/context/PreferencesContext';
 import { useAuth } from '@/context/AuthContext';
 import { ApiError, api } from '@/lib/api';
@@ -129,15 +130,7 @@ export function Settings() {
         }
       />
 
-      <section aria-labelledby="ai-heading" className="mb-10">
-        <h2 id="ai-heading">AI assistance</h2>
-        <p className="text-muted-foreground">
-          Off. Summaries, the things-to-do list and search all run on our own servers with no third
-          party involved. Turning this on would send the text of your notes to Anthropic to produce
-          a better summary — so it stays off until there is a consent screen worth reading, which
-          is the next phase of work.
-        </p>
-      </section>
+      <AiConsent />
 
       <section aria-labelledby="data-heading" className="mb-10">
         <h2 id="data-heading">Your data</h2>
