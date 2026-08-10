@@ -242,7 +242,7 @@ Remote: `https://github.com/PeterFasae/clarity` (branch `main`). History starts 
 
 - **Commit after every task, change or adjustment.** One logical change per commit, not one commit per session. If a change touches the engine, the API and the UI, that is still one commit if it is one change.
 - **Push after each commit** unless the working tree is mid-gate and failing.
-- **Commits are authored by Peter Fasae `<pfasae@gmail.com>`.** Do **not** add a `Co-Authored-By: Claude` trailer, a `🤖 Generated with` footer, or any other AI attribution to commits or PR bodies. This is a deliberate preference, not an oversight.
+- **Commits are authored by Peter Fasae `<pfasae@gmail.com>`.** No `Co-Authored-By` trailers, no generated-with footers, no tool attribution of any kind in commits or PR bodies. This is a deliberate preference, not an oversight.
 - Message style matches the existing history: a plain imperative subject line describing the change, body only when the *why* isn't obvious from the diff.
 - `docs/status.json` is updated in the same commit as any change to what a feature does.
 

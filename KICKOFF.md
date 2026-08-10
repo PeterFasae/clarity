@@ -10,7 +10,7 @@ Clarity is a cloud note-taking platform for people with ADHD.
 Three files carry the whole brief, in this order:
   CONTEXT.md  — what it is, who it's for, the seven design rules, the eight settled
                 decisions, claims discipline, the public website spec
-  ENGINEERING.md   — workspace layout, the canonical data contract, API routes, how the
+  ENGINEERING.md — workspace layout, the canonical data contract, API routes, how the
                 engine is wired, and the inherited bugs not to reproduce
   BUILD.md    — the phased spec with acceptance criteria. Start at Phase 0.
 
