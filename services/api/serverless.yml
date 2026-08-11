@@ -300,6 +300,8 @@ resources:
         BillingMode: PAY_PER_REQUEST
         SSESpecification:
           SSEEnabled: true
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
@@ -345,6 +347,128 @@ resources:
           IdToken: hours
           RefreshToken: days
 
+    # ---- CloudWatch ------------------------------------------------------
+    #
+    # Report §5.2 asks for alarms on error rate and on DynamoDB throttling.
+    # Everything below notifies one topic; subscribe an address to it after the
+    # first deploy (see docs/deployment.md) — an alarm nobody receives is
+    # decoration.
+
+    AlarmTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-alarms-${sls:stage}
+        DisplayName: Clarity API alarms
+
+    # Error *rate*, not error count: a handful of 500s in a busy hour is a
+    # different thing from a handful in ten requests, and only the ratio tells
+    # them apart.
+    ApiErrorRateAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${sls:stage}-error-rate
+        AlarmDescription: More than 5% of Lambda invocations failed over 5 minutes.
+        EvaluationPeriods: 2
+        DatapointsToAlarm: 2
+        Threshold: 5
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - Ref: AlarmTopic
+        OKActions:
+          - Ref: AlarmTopic
+        Metrics:
+          - Id: errorRate
+            Label: Error rate (%)
+            Expression: 100 * errors / MAX([invocations, 1])
+            ReturnData: true
+          - Id: errors
+            ReturnData: false
+            MetricStat:
+              Metric:
+                Namespace: AWS/Lambda
+                MetricName: Errors
+              Period: 300
+              Stat: Sum
+          - Id: invocations
+            ReturnData: false
+            MetricStat:
+              Metric:
+                Namespace: AWS/Lambda
+                MetricName: Invocations
+              Period: 300
+              Stat: Sum
+
+    NotesTableThrottleAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${sls:stage}-notes-throttled
+        AlarmDescription: DynamoDB throttled requests against the notes table.
+        Namespace: AWS/DynamoDB
+        MetricName: ThrottledRequests
+        Dimensions:
+          - Name: TableName
+            Value: ${self:provider.environment.NOTES_TABLE}
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 0
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - Ref: AlarmTopic
+
+    PreferencesTableThrottleAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${sls:stage}-preferences-throttled
+        AlarmDescription: DynamoDB throttled requests against the preferences table.
+        Namespace: AWS/DynamoDB
+        MetricName: ThrottledRequests
+        Dimensions:
+          - Name: TableName
+            Value: ${self:provider.environment.PREFERENCES_TABLE}
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 0
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - Ref: AlarmTopic
+
+    # The fallback is supposed to make an AI outage invisible to the user. That
+    # is exactly why it needs an alarm: invisible failure is still failure, and
+    # without this nobody would ever learn the LLM had stopped answering.
+    LlmFallbackMetricFilter:
+      Type: AWS::Logs::MetricFilter
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${sls:stage}-createNote
+        FilterPattern: '"falling back to local"'
+        MetricTransformations:
+          - MetricNamespace: ${self:service}/${sls:stage}
+            MetricName: LlmFallbacks
+            MetricValue: '1'
+            DefaultValue: 0
+
+    LlmFallbackAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${sls:stage}-llm-falling-back
+        AlarmDescription: >-
+          The LLM engine failed and the local engine answered instead. Users are
+          unaffected, which is the point, so this is the only way to find out.
+        Namespace: ${self:service}/${sls:stage}
+        MetricName: LlmFallbacks
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 5
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - Ref: AlarmTopic
+
   Outputs:
     UserPoolId:
       Value:
@@ -352,3 +476,6 @@ resources:
     UserPoolClientId:
       Value:
         Ref: CognitoUserPoolClient
+    AlarmTopicArn:
+      Value:
+        Ref: AlarmTopic

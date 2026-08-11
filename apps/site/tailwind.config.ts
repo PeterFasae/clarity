@@ -21,7 +21,10 @@ export default {
         // Brand palette (fixed hues; see index.css for the AA rationale)
         lavender: {
           DEFAULT: "#9b87f5", // fills / large display type only — ~2.9:1 on white, NOT body text
-          ink: "#5F49BC", // all purple text + links — ~6.7:1 on white
+          // Theme-aware. A fixed hex here is what let dark mode ship at 2.5:1.
+          ink: "hsl(var(--lavender-ink))",
+          "ink-on": "hsl(var(--lavender-ink-on))",
+          "ink-hover": "hsl(var(--lavender-ink-hover))",
           soft: "hsl(var(--lavender-soft))",
         },
         softblue: "hsl(var(--softblue))",

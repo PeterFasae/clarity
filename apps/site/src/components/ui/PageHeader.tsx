@@ -14,7 +14,7 @@ export function PageHeader({
     <Section tone="bg" className="pb-10 sm:pb-12">
       <Reveal>
         {kicker && (
-          <p className="mb-3 font-bold uppercase tracking-wide text-[#5F49BC]">
+          <p className="mb-3 font-bold uppercase tracking-wide text-lavender-ink">
             {kicker}
           </p>
         )}

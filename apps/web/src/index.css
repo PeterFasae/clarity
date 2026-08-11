@@ -55,7 +55,12 @@
     --secondary-foreground: 0 0% 100%;
 
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Darkened from shadcn's 46.9% (#64748b). That clears 4.5:1 on white but
+       only reaches 4.34:1 on --muted/--accent (#f1f5f9), which is where this
+       colour actually sits — hint text under a selected radio, the preview
+       line on a selected note card, inline code. Measured 4.74:1 there and
+       5.19:1 on white. axe found this; the eye did not. */
+    --muted-foreground: 215.4 16.3% 44%;
 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;

@@ -50,6 +50,13 @@
     --line: 253 40% 90%; /* soft lavender-tinted hairline */
 
     --lavender-soft: 253 100% 96%;
+    /* All purple text, links and small UI. ~6.6:1 on the off-white page. */
+    --lavender-ink: 252 46% 51%; /* #5F49BC */
+    /* The foreground to use ON lavender-ink. It has to flip with the theme:
+       lavender-ink is dark in light mode and light in dark mode, so a fixed
+       white here is 2.4:1 on the dark-mode fill. */
+    --lavender-ink-on: 0 0% 100%;
+    --lavender-ink-hover: 252 46% 43%;
     --softblue: 214 94% 91%; /* #D3E4FD */
     --softgreen: 90 79% 94%; /* #F2FCE2 */
 
@@ -68,6 +75,13 @@
     --line: 240 12% 24%;
 
     --lavender-soft: 250 25% 22%;
+    /* Lightened for the dark surfaces, which is what the comment above always
+       claimed and what nothing actually did: the light-mode #5F49BC was
+       hardcoded through the components and measured 2.05–2.71:1 here.
+       This value measures 7.4:1 on the page and 5.6:1 on lavender-soft. */
+    --lavender-ink: 253 82% 78%; /* #AD99F5 */
+    --lavender-ink-on: 240 14% 10%; /* the page's own dark — 7.4:1 on the fill */
+    --lavender-ink-hover: 253 82% 86%;
     --softblue: 214 40% 24%;
     --softgreen: 120 20% 22%;
 

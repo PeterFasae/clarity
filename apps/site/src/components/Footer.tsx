@@ -14,16 +14,16 @@ export function Footer() {
           </div>
 
           <nav aria-label="Footer" className="flex flex-col gap-2">
-            <Link to="/how-it-works" className="text-[#5F49BC] hover:underline">
+            <Link to="/how-it-works" className="text-lavender-ink hover:underline">
               How it works
             </Link>
-            <Link to="/accessibility" className="text-[#5F49BC] hover:underline">
+            <Link to="/accessibility" className="text-lavender-ink hover:underline">
               Accessibility
             </Link>
-            <Link to="/research" className="text-[#5F49BC] hover:underline">
+            <Link to="/research" className="text-lavender-ink hover:underline">
               Research
             </Link>
-            <Link to="/privacy" className="text-[#5F49BC] hover:underline">
+            <Link to="/privacy" className="text-lavender-ink hover:underline">
               Privacy
             </Link>
           </nav>

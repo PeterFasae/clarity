@@ -19,7 +19,7 @@ function ToggleButton({ pressed, onClick, label, children }: ToggleButtonProps) 
       className={cn(
         "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold transition-colors",
         pressed
-          ? "border-[#5F49BC] bg-lavender-soft text-[#5F49BC]"
+          ? "border-lavender-ink bg-lavender-soft text-lavender-ink"
           : "border-line bg-surface text-ink-muted hover:text-ink",
       )}
     >

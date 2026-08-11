@@ -69,10 +69,10 @@ export function WaitlistForm() {
       <div
         ref={successRef}
         tabIndex={-1}
-        className="rounded-lg border border-[#5F49BC]/40 bg-lavender-soft p-6 outline-none"
+        className="rounded-lg border border-lavender-ink/40 bg-lavender-soft p-6 outline-none"
       >
         <p className="flex items-center gap-2 text-lg font-bold text-ink">
-          <Check className="h-5 w-5 text-[#5F49BC]" aria-hidden="true" />
+          <Check className="h-5 w-5 text-lavender-ink" aria-hidden="true" />
           You&rsquo;re on the list.
         </p>
         {!ENDPOINT ? (
@@ -88,7 +88,7 @@ export function WaitlistForm() {
         )}
 
         {/* Optional, clearly skippable follow-up. */}
-        <div className="mt-6 border-t border-[#5F49BC]/20 pt-5">
+        <div className="mt-6 border-t border-lavender-ink/20 pt-5">
           <label htmlFor={followUpId} className="block font-bold text-ink">
             One optional question
           </label>
@@ -102,7 +102,7 @@ export function WaitlistForm() {
             value={followUp}
             onChange={(e) => setFollowUp(e.target.value)}
             rows={3}
-            className="mt-3 w-full rounded-lg border border-line bg-surface p-3 text-base text-ink outline-none focus-visible:border-[#5F49BC]"
+            className="mt-3 w-full rounded-lg border border-line bg-surface p-3 text-base text-ink outline-none focus-visible:border-lavender-ink"
             placeholder="Totally optional…"
           />
         </div>
@@ -131,7 +131,7 @@ export function WaitlistForm() {
           placeholder="you@example.com"
           className={cn(
             "min-w-0 flex-1 rounded-lg border bg-surface px-4 py-3 text-base text-ink outline-none",
-            error ? "border-[hsl(var(--danger))]" : "border-line focus-visible:border-[#5F49BC]",
+            error ? "border-[hsl(var(--danger))]" : "border-line focus-visible:border-lavender-ink",
           )}
         />
         <Button type="submit" size="lg" disabled={status === "submitting"}>

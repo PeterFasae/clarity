@@ -65,6 +65,12 @@ export function Notes() {
 
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-6 p-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:p-6">
+      {/* The page's own heading. Hidden visually because a banner saying "Your
+          notes" above a screen full of notes is exactly the chrome design rule 1
+          asks us to remove — but a screen reader still needs somewhere to land,
+          and the heading order has to start at one. */}
+      <h1 className="sr-only">Your notes</h1>
+
       <div className="min-w-0">
         <QuickCapture />
 

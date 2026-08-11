@@ -1,7 +1,7 @@
 {
   "$comment": "The single registry of what actually exists. Both apps/web and apps/site read it, so a 'Coming soon' label cannot rot after a feature ships or slips. status is built | in-progress | planned. Public copy may only describe a feature in the PRESENT TENSE when its status is 'built' — see CONTEXT.md §6. Update this file in the same commit as any change to what a feature does.",
   "updated": "2026-08-10",
-  "phase": "3 in progress — the AI seam is built and tested; the accessibility audit, the accessibility statement, the marketing-site finish and the deploy are still ahead. Nothing is deployed, so nothing here is marked built.",
+  "phase": "3 in progress — accessibility audited and fixed, claims audited, the Find it demo built, the deploy prepared but not run. Nothing is deployed, so nothing here is marked built.",
   "features": [
     {
       "id": "quick-capture",
@@ -63,7 +63,7 @@
       "group": "organise",
       "status": "in-progress",
       "publicCopy": "Search matches what a note says, not what you happened to call it.",
-      "note": "Runs across your own notes and shows how strong each match is. Not deployed yet."
+      "note": "Search runs on the server across your own notes and returns a relevance score, and you can try the real ranking code in the Find it demo on this site. Not deployed yet."
     },
     {
       "id": "pin-archive-tag",
@@ -179,9 +179,9 @@
       "id": "accessibility-audit",
       "name": "Published accessibility audit",
       "group": "platform",
-      "status": "planned",
+      "status": "in-progress",
       "publicCopy": "A dated conformance statement naming what conforms, what doesn't yet, and how to report a barrier.",
-      "note": "WCAG 2.1 AA is the target. No conformance claim will be made before the audit has actually run."
+      "note": "Our own audit is done and published, dated, with the gaps named: axe-core clean across both surfaces in every theme, keyboard walked by hand, contrast measured. Not done: any real screen-reader testing, an independent audit, or testing with neurodivergent users."
     }
   ]
 }

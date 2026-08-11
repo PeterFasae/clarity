@@ -50,7 +50,7 @@ export function SummariseTab() {
               setResult(null);
             }}
             rows={12}
-            className="w-full rounded-lg border border-line bg-surface p-4 text-base leading-relaxed text-ink outline-none focus-visible:border-[#5F49BC]"
+            className="w-full rounded-lg border border-line bg-surface p-4 text-base leading-relaxed text-ink outline-none focus-visible:border-lavender-ink"
           />
         </div>
 
@@ -79,7 +79,7 @@ export function SummariseTab() {
                 <p className="text-base leading-relaxed text-ink">
                   {result.summary}
                 </p>
-                <p className="mt-4 border-t border-[#5F49BC]/20 pt-3 text-sm text-ink-muted">
+                <p className="mt-4 border-t border-lavender-ink/20 pt-3 text-sm text-ink-muted">
                   {result.sourceSentenceCount} sentences &rarr;{" "}
                   {result.keptSentenceCount}. Your original is untouched on the
                   left — you never lose your words.

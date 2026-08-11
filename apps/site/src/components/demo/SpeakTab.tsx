@@ -154,7 +154,7 @@ export function SpeakTab() {
 
         {listening && (
           <span className="inline-flex items-center gap-2 text-ink-muted">
-            <span className="h-3 w-3 animate-pulse-gentle rounded-full bg-[#5F49BC]" />
+            <span className="h-3 w-3 animate-pulse-gentle rounded-full bg-lavender-ink" />
             Listening…
           </span>
         )}

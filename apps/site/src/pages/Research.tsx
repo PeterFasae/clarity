@@ -47,8 +47,8 @@ export function Research() {
       {/* Prominent build-status notice — honest about what's missing. */}
       <Section tone="surface" className="pt-0">
         <Reveal>
-          <div className="rounded-lg border-2 border-dashed border-[#5F49BC]/40 bg-lavender-soft p-7">
-            <p className="font-bold uppercase tracking-wide text-[#5F49BC]">
+          <div className="rounded-lg border-2 border-dashed border-lavender-ink/40 bg-lavender-soft p-7">
+            <p className="font-bold uppercase tracking-wide text-lavender-ink">
               Placeholder — source material needed
             </p>
             <p className="mt-3 max-w-measure text-ink">

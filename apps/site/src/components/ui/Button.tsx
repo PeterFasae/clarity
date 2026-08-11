@@ -13,11 +13,13 @@ const base =
   "inline-flex items-center justify-center gap-2 rounded-lg font-bold transition-[background-color,border-color,color] duration-200 disabled:opacity-60 disabled:pointer-events-none select-none";
 
 const variants: Record<Variant, string> = {
-  // #5F49BC on white = ~6.7:1; white on #5F49BC = ~6.7:1. Both pass AA.
+  // Both halves of the pair are theme-aware: lavender-ink flips light/dark
+  // with the theme and lavender-ink-on flips with it, so the fill keeps its
+  // contrast in both. Measured in both themes by the axe sweep.
   primary:
-    "bg-[#5F49BC] text-white hover:bg-[#4d3aa0] border border-transparent",
+    "bg-lavender-ink text-lavender-ink-on hover:bg-lavender-ink-hover border border-transparent",
   secondary:
-    "bg-surface text-[#5F49BC] border border-[#5F49BC] hover:bg-lavender-soft",
+    "bg-surface text-lavender-ink border border-lavender-ink hover:bg-lavender-soft",
   ghost: "bg-transparent text-ink hover:bg-lavender-soft border border-transparent",
 };
 

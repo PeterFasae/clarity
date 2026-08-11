@@ -455,3 +455,68 @@ goes up, because a zero that could never be anything else proves nothing.
 back after the 6000ms default instead. The hang test failed on the elapsed-time
 assertion, which is exactly what it was for. Declared alongside the other
 environment config.
+
+### 3.7 — The accessibility audit found two real contrast defects, both of the same kind
+
+Both were colours that had been checked against the wrong background.
+
+`apps/web`'s muted text measured 4.34:1 on the `accent` surface. It cleared
+4.5:1 on white, which is where it had been reasoned about, but white is not
+where it sits — it sits on selected rows, selected cards and inline code. The
+token was darkened to clear 4.5:1 on the lightest surface it ever appears on.
+
+`apps/site` was worse. The `#5F49BC` purple was hardcoded as a literal hex in
+forty places, and the dark theme's own comment claimed "lavender text lightened
+so it still passes AA on the dark surface" — describing something no code did.
+In dark mode it measured **2.05–2.71:1** across fourteen elements. It is now a
+theme-aware variable. Fixing it surfaced a second problem immediately: filled
+buttons went to 2.42:1, because `lavender-ink` is both a text colour *and* a
+fill, and those need opposite foregrounds per theme. Hence the paired
+`--lavender-ink-on`.
+
+The lesson worth keeping: a colour is not a value, it is a value **and** the
+surface it sits on, and a design token that does not participate in theming will
+be wrong in exactly the theme nobody looked at.
+
+### 3.8 — Programmatic `.focus()` cannot verify a focus ring
+
+An earlier audit script called `element.focus()` on every control and read
+`outlineStyle`, and reported everything passing. That method is wrong:
+`:focus-visible` deliberately does not match for programmatic or mouse focus, so
+the script was measuring the browser's heuristic rather than the stylesheet. The
+walkthrough now sends real `Tab` presses and reads the focused element on
+`keyup`. Same conclusion in the end, but only the second method was evidence.
+
+### 3.9 — Claims audit: four corrections
+
+- The homepage said notes are "exportable and deletable, always" in the present
+  tense, while `/privacy` said "when the app ships, your notes **will be**".
+  Same claim, two tenses, and the present-tense one was on the busiest page.
+- The homepage said "built for screen readers". Nobody has run one. It now
+  describes what was actually verified — keyboard reachability, visible focus,
+  measured contrast — and points at the statement for the rest.
+- `/accessibility` claimed "light, dark, and low-stimulation themes". The
+  marketing site has light and dark only; low-stimulation exists in the app.
+- The demo section said "three pieces of Clarity" and there are now four.
+
+The contrast table on that page was also rebuilt from values measured in the
+running browser in both themes, rather than the light-theme-only figures it had
+been carrying — which is precisely how the dark-mode defect went unnoticed.
+
+### 3.10 — The deploy is prepared, not done, and the numbers stay unclaimed
+
+`serverless package` runs clean for both stages and the generated template was
+inspected: 102 resources, 13 per-function IAM roles with no wildcards, 12 of 13
+methods behind the Cognito authorizer, all seven environment variables present
+including `ANTHROPIC_TIMEOUT_MS`, both tables with SSE, PITR and a retain
+policy. CloudWatch alarms were added for error *rate* (not count — a ratio is
+the only thing that distinguishes a bad hour from a quiet one), DynamoDB
+throttling on both tables, and a log-metric filter on the LLM fallback, because
+a fallback that works is invisible and invisible failure is still failure.
+
+There are no AWS credentials and no AWS CLI on this machine, so the stack has
+never been created. Report §5.4's published figures remain unreproduced, and the
+local numbers stay labelled as a lower bound. `docs/deployment.md` carries the
+exact commands and the smoke test; it also warns that `${env:...}` resolves from
+the deploying shell, which is how a test-only `ANTHROPIC_BASE_URL` could
+otherwise end up baked into a production Lambda.

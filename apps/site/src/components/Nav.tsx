@@ -20,7 +20,7 @@ function Wordmark() {
     >
       <span
         aria-hidden="true"
-        className="grid h-8 w-8 place-items-center rounded-lg bg-[#5F49BC] text-white"
+        className="grid h-8 w-8 place-items-center rounded-lg bg-lavender-ink text-lavender-ink-on"
       >
         {/* simple abstract mark, not a brain/lightning motif */}
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
@@ -58,7 +58,7 @@ export function Nav() {
                 cn(
                   "rounded-lg px-3 py-2 text-base font-bold transition-colors",
                   isActive
-                    ? "text-[#5F49BC]"
+                    ? "text-lavender-ink"
                     : "text-ink-muted hover:text-ink",
                 )
               }
@@ -99,7 +99,7 @@ export function Nav() {
                 className={({ isActive }) =>
                   cn(
                     "rounded-lg px-3 py-3 text-lg font-bold",
-                    isActive ? "text-[#5F49BC]" : "text-ink",
+                    isActive ? "text-lavender-ink" : "text-ink",
                   )
                 }
               >

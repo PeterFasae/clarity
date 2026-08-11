@@ -3,33 +3,54 @@ import { Seo } from "@/components/Seo";
 import { Section, Reveal } from "@/components/ui/Section";
 import { PageHeader } from "@/components/ui/PageHeader";
 
+/**
+ * Everything on this page is something that was checked, on the date below, by
+ * the method named next to it. Nothing here is aspirational — the things we
+ * have not done are in their own list, and they stay there until they are done.
+ */
+const VERIFIED_ON = "10 August 2026";
+
 const IMPLEMENTED = [
-  "Full keyboard navigation, in a logical order, with a visible focus indicator on every control.",
+  "Keyboard navigation through every control on every page, in a logical order, with a visible focus ring on each one. Walked with real key presses, not scripted focus.",
   "A skip link to jump straight to the main content.",
   "Body text at 18px with 1.7 line-height, and a reading measure capped at about 65 characters.",
-  "A visible “reduce motion” toggle, plus full support for your operating system’s reduced-motion setting.",
+  "A visible \u201creduce motion\u201d toggle that overrides your operating system\u2019s setting in both directions, as well as honouring it by default.",
   "A font toggle that switches the whole site to OpenDyslexic.",
-  "Light, dark, and low-stimulation themes, saved on your device (no cookies).",
-  "Colour contrast measured against WCAG 2.1 AA targets — the pairs we ship are listed below.",
-  "The interactive demo runs entirely in your browser, so nothing depends on a network connection.",
+  "Light and dark themes, saved on your device \u2014 no cookies, so no cookie banner.",
+  "Zero automated accessibility violations on every page, in both themes, including the interactive demo and its focus-mode overlay.",
+  "Colour contrast measured in both themes. Every text pair we ship is listed below; the lowest is 5.6:1 against a 4.5:1 requirement.",
+  "The interactive demo runs entirely in your browser, so nothing about it depends on a network connection.",
 ];
 
 const NOT_YET = [
   "An independent, third-party accessibility audit.",
-  "Screen-reader testing at scale across JAWS, NVDA, and VoiceOver.",
+  "Any testing with a real screen reader. The markup uses landmarks, headings, labels and live regions, and the demo\u2019s focus-mode overlay traps focus and announces itself \u2014 but nobody has yet driven this site with VoiceOver, NVDA or JAWS, so we are not going to claim it works well with them.",
   "Testing with a diverse group of ADHD and neurodivergent users.",
-  "The in-app experience — this statement covers this marketing website only. The app is still in development.",
+  "Testing at a range of browser zoom levels and with a screen magnifier.",
+  "The in-app experience \u2014 this statement covers this marketing website only. The app is still in development and has its own audit ahead of it.",
 ];
 
-// Measured with the WCAG relative-luminance formula (light theme).
+/**
+ * Measured with the WCAG relative-luminance formula against the colours the
+ * site actually computes, in both themes, rather than against the hex values we
+ * meant to ship. Those two things were not the same: the purple was hardcoded
+ * for the light theme and measured 2.1\u20132.7:1 in dark until this audit.
+ */
 const CONTRAST = [
-  { pair: "Body text (#2A2A33) on off-white (#F6F6F7)", ratio: "13.2:1", pass: "AAA" },
-  { pair: "Body text (#2A2A33) on white (#FFFFFF)", ratio: "14.2:1", pass: "AAA" },
-  { pair: "Muted text (#5B6066) on off-white (#F6F6F7)", ratio: "5.9:1", pass: "AA" },
-  { pair: "Link/heading purple (#5F49BC) on white", ratio: "6.6:1", pass: "AA" },
-  { pair: "White on button purple (#5F49BC)", ratio: "6.6:1", pass: "AA" },
-  { pair: "Error text (#B3261E) on white", ratio: "6.5:1", pass: "AA" },
-  { pair: "Brand lavender (#9B87F5) on white — fills/large only", ratio: "2.9:1", pass: "Decorative / large text only" },
+  { pair: "Body text on the page background", light: "13.0:1", dark: "14.6:1", pass: "AAA" },
+  { pair: "Body text on a card", light: "14.2:1", dark: "13.3:1", pass: "AAA" },
+  { pair: "Muted text on the page background", light: "5.8:1", dark: "7.5:1", pass: "AA" },
+  { pair: "Muted text on a card", light: "6.3:1", dark: "6.8:1", pass: "AA" },
+  { pair: "Links and headings in purple, on the page", light: "6.0:1", dark: "7.4:1", pass: "AA" },
+  { pair: "Purple on the soft lavender fill", light: "5.7:1", dark: "5.6:1", pass: "AA" },
+  { pair: "Button label on a filled purple button", light: "6.6:1", dark: "7.4:1", pass: "AA" },
+  { pair: "Error text on a card", light: "6.6:1", dark: "7.4:1", pass: "AA" },
+  {
+    pair: "Brand lavender \u2014 fills and large display type only, never body text",
+    light: "2.9:1",
+    dark: "n/a",
+    pass: "Decorative only",
+  },
 ];
 
 export function Accessibility() {
@@ -47,7 +68,9 @@ export function Accessibility() {
           <>
             Our standard is <span className="font-bold text-ink">WCAG 2.1 AA</span>.
             We&rsquo;re not going to tell you we&rsquo;ve reached it before an
-            independent audit says so. Here&rsquo;s the honest picture instead.
+            independent audit says so. Here&rsquo;s the honest picture instead,
+            last checked on{" "}
+            <span className="font-bold text-ink">{VERIFIED_ON}</span>.
           </>
         }
       />
@@ -57,10 +80,17 @@ export function Accessibility() {
           <h2 id="impl-h" className="text-2xl">
             What&rsquo;s implemented on this website
           </h2>
+          <p className="mt-3 max-w-measure text-ink-muted">
+            Every line below was checked rather than assumed. The automated part
+            used axe-core across all five pages in both themes; the keyboard part
+            was walked by hand. Automated testing only catches a minority of
+            accessibility problems, which is why the list underneath it matters
+            more than this one.
+          </p>
           <ul className="mt-6 grid gap-4 md:grid-cols-2">
             {IMPLEMENTED.map((item) => (
               <li key={item} className="flex gap-3 rounded-lg border border-line bg-bg p-4">
-                <Check className="mt-1 h-5 w-5 shrink-0 text-[#5F49BC]" aria-hidden="true" />
+                <Check className="mt-1 h-5 w-5 shrink-0 text-lavender-ink" aria-hidden="true" />
                 <span>{item}</span>
               </li>
             ))}
@@ -102,12 +132,14 @@ export function Accessibility() {
           <div className="mt-6 overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <caption className="sr-only">
-                Contrast ratios for text and background colour pairs
+                Measured contrast ratios for every text and background pair the
+                site ships, in both themes
               </caption>
               <thead>
                 <tr className="border-b border-line">
                   <th scope="col" className="py-3 pr-4 font-bold">Colour pair</th>
-                  <th scope="col" className="py-3 pr-4 font-bold">Ratio</th>
+                  <th scope="col" className="py-3 pr-4 font-bold">Light</th>
+                  <th scope="col" className="py-3 pr-4 font-bold">Dark</th>
                   <th scope="col" className="py-3 font-bold">Rating</th>
                 </tr>
               </thead>
@@ -115,7 +147,8 @@ export function Accessibility() {
                 {CONTRAST.map((row) => (
                   <tr key={row.pair} className="border-b border-line align-top">
                     <td className="py-3 pr-4">{row.pair}</td>
-                    <td className="py-3 pr-4 font-bold">{row.ratio}</td>
+                    <td className="py-3 pr-4 font-bold">{row.light}</td>
+                    <td className="py-3 pr-4 font-bold">{row.dark}</td>
                     <td className="py-3 text-ink-muted">{row.pass}</td>
                   </tr>
                 ))}
@@ -128,8 +161,8 @@ export function Accessibility() {
       {/* Visible TODO for real audit results — intentionally not hidden. */}
       <Section tone="bg" labelledBy="audit-h">
         <Reveal>
-          <div className="rounded-lg border-2 border-dashed border-[#5F49BC]/40 bg-lavender-soft p-7">
-            <p className="font-bold uppercase tracking-wide text-[#5F49BC]">
+          <div className="rounded-lg border-2 border-dashed border-lavender-ink/40 bg-lavender-soft p-7">
+            <p className="font-bold uppercase tracking-wide text-lavender-ink">
               TODO — audit results
             </p>
             <h2 id="audit-h" className="mt-2 text-2xl">
@@ -155,7 +188,7 @@ export function Accessibility() {
             know — it&rsquo;s the fastest way for us to fix it. Email{" "}
             <a
               href="mailto:accessibility@clarity.example"
-              className="font-bold text-[#5F49BC] hover:underline"
+              className="font-bold text-lavender-ink hover:underline"
             >
               accessibility@clarity.example
             </a>{" "}

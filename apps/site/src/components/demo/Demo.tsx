@@ -1,11 +1,16 @@
 import { useRef, useState, type KeyboardEvent } from "react";
-import { Maximize2, Mic, Sparkles } from "lucide-react";
+import { Maximize2, Mic, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { SpeakTab } from "./SpeakTab";
+import { FindTab } from "./FindTab";
 import { SummariseTab } from "./SummariseTab";
 import { FocusTab } from "./FocusTab";
 
 const TABS = [
+  // "Find it" leads, because it is the argument rather than a feature: the
+  // whole product exists because getting a note back out is the part that
+  // fails. A visitor who only touches one tab should touch this one.
+  { id: "find", label: "Find it", icon: Search },
   { id: "speak", label: "Speak it", icon: Mic },
   { id: "summarise", label: "Summarise it", icon: Sparkles },
   { id: "focus", label: "Focus mode", icon: Maximize2 },
@@ -18,7 +23,7 @@ type TabId = (typeof TABS)[number]["id"];
  * roving arrow-key navigation. Every panel runs client-side; zero network.
  */
 export function Demo() {
-  const [active, setActive] = useState<TabId>("speak");
+  const [active, setActive] = useState<TabId>("find");
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -60,7 +65,7 @@ export function Demo() {
               className={cn(
                 "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-base font-bold transition-colors",
                 selected
-                  ? "bg-[#5F49BC] text-white"
+                  ? "bg-lavender-ink text-lavender-ink-on"
                   : "text-ink-muted hover:bg-lavender-soft hover:text-ink",
               )}
             >
@@ -81,6 +86,7 @@ export function Demo() {
           tabIndex={0}
           className="p-5 sm:p-7"
         >
+          {tab.id === "find" && <FindTab />}
           {tab.id === "speak" && <SpeakTab />}
           {tab.id === "summarise" && <SummariseTab />}
           {tab.id === "focus" && <FocusTab />}

@@ -156,7 +156,7 @@ export function Home() {
               ADHD doesn&rsquo;t work like that. Attention arrives in bursts,
               thinking runs sideways, and the admin work is exactly what falls off.
               So we built the opposite:{" "}
-              <span className="font-bold text-[#5F49BC]">
+              <span className="font-bold text-lavender-ink">
                 capture with no ceremony, and let the software do the organising.
               </span>
             </p>
@@ -174,9 +174,9 @@ export function Home() {
             Don&rsquo;t take our word for it. Try it.
           </h2>
           <p className="mt-4 max-w-measure text-lg text-ink-muted">
-            Three pieces of Clarity, running right here in your browser — the
-            summariser is the real one, imported from the same module the app
-            uses, not a mock-up. Nothing is sent anywhere.
+            Four pieces of Clarity, running right here in your browser. The
+            search and the summariser are the real ones, imported from the same
+            module the app runs — not a mock-up. Nothing is sent anywhere.
           </p>
         </Reveal>
         <Reveal className="mt-8">
@@ -197,7 +197,7 @@ export function Home() {
               <div className="h-full rounded-lg border border-line bg-surface p-7">
                 <h3 className="text-xl">{block.heading}</h3>
                 <p className="mt-3 text-ink-muted">{block.body}</p>
-                <p className="mt-4 inline-block rounded-full bg-lavender-soft px-3 py-1 text-sm font-bold text-[#5F49BC]">
+                <p className="mt-4 inline-block rounded-full bg-lavender-soft px-3 py-1 text-sm font-bold text-lavender-ink">
                   {substanceStatus(block.features)}
                 </p>
               </div>
@@ -206,7 +206,7 @@ export function Home() {
         </div>
         <Reveal>
           <p className="mt-8">
-            <Link to="/how-it-works" className="text-lg font-bold text-[#5F49BC] hover:underline">
+            <Link to="/how-it-works" className="text-lg font-bold text-lavender-ink hover:underline">
               See the full walkthrough &rarr;
             </Link>
           </p>
@@ -228,7 +228,7 @@ export function Home() {
                 Built on published work in neurodiverse-centred design, universal
                 design for learning, and assistive technology.
               </p>
-              <Link to="/research" className="mt-4 inline-block font-bold text-[#5F49BC] hover:underline">
+              <Link to="/research" className="mt-4 inline-block font-bold text-lavender-ink hover:underline">
                 Read the research &rarr;
               </Link>
             </div>
@@ -237,10 +237,12 @@ export function Home() {
             <div className="h-full rounded-lg border border-line bg-bg p-7">
               <h3 className="text-xl">Accessible by construction</h3>
               <p className="mt-3 text-ink-muted">
-                Keyboard navigable, built for screen readers, with WCAG 2.1 AA as
-                our standard — and an honest record of where we currently are.
+                Every control reachable by keyboard with a visible focus ring,
+                contrast measured in both themes, and WCAG 2.1 AA as our
+                standard — with an honest record of what has and hasn&rsquo;t
+                been tested yet.
               </p>
-              <Link to="/accessibility" className="mt-4 inline-block font-bold text-[#5F49BC] hover:underline">
+              <Link to="/accessibility" className="mt-4 inline-block font-bold text-lavender-ink hover:underline">
                 Accessibility statement &rarr;
               </Link>
             </div>
@@ -250,9 +252,10 @@ export function Home() {
               <h3 className="text-xl">We don&rsquo;t monitor you</h3>
               <p className="mt-3 text-ink-muted">
                 No attention tracking. No behavioural profiling. No selling data.
-                Your notes are yours — exportable and deletable, always.
+                When the app ships, your notes will be yours — exportable and
+                deletable, always.
               </p>
-              <Link to="/privacy" className="mt-4 inline-block font-bold text-[#5F49BC] hover:underline">
+              <Link to="/privacy" className="mt-4 inline-block font-bold text-lavender-ink hover:underline">
                 Privacy in plain English &rarr;
               </Link>
             </div>

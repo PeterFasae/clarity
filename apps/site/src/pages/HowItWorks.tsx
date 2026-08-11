@@ -9,7 +9,7 @@ function StatusTag({ status }: { status: Feature["status"] }) {
   const tone =
     status === "built"
       ? "bg-softgreen text-ink"
-      : "bg-lavender-soft text-[#5F49BC]";
+      : "bg-lavender-soft text-lavender-ink";
   return (
     <span className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-sm font-bold ${tone}`}>
       {STATUS_LABEL[status]}
@@ -58,8 +58,8 @@ export function HowItWorks() {
             <span className="font-bold text-ink">available now</span> only when a
             thing genuinely is. Right now Clarity is in development and most of
             this list is honestly marked{" "}
-            <span className="font-bold text-[#5F49BC]">being built</span> or{" "}
-            <span className="font-bold text-[#5F49BC]">coming soon</span>.
+            <span className="font-bold text-lavender-ink">being built</span> or{" "}
+            <span className="font-bold text-lavender-ink">coming soon</span>.
           </>
         }
       />
