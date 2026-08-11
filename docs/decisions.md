@@ -520,3 +520,27 @@ local numbers stay labelled as a lower bound. `docs/deployment.md` carries the
 exact commands and the smoke test; it also warns that `${env:...}` resolves from
 the deploying shell, which is how a test-only `ANTHROPIC_BASE_URL` could
 otherwise end up baked into a production Lambda.
+
+### 3.11 — VoiceOver could not be run, and the substitute found a defect anyway
+
+VoiceOver will not start from a script (`tell application "VoiceOver" to
+activate` times out; `VoiceOverStarter` does nothing), and even running it could
+not have been driven, because this shell has System Events query permission but
+not keystroke permission — `osascript is not allowed to send keystrokes (1002)`.
+Behind both: VoiceOver's output is speech, and the best available capture is its
+caption panel, a transcript that by construction cannot show how speech flows.
+
+What was done instead was reading the accessibility tree control by control.
+That is not a screen-reader test and the statement says so in as many words. It
+did, however, find the worst accessibility defect in the app: **the entire notes
+list was inside an `aria-live` region.** A live region announces its whole
+subtree on any change, so every search keystroke would have read out every
+matching note in full — a wall of speech, at exactly the audience this product
+exists to protect from one. No axe rule flags this; nothing but reading the tree
+or using a screen reader would have caught it.
+
+A second defect followed from re-running the sweep at a narrow viewport: the
+mobile header bar sat outside any landmark. It is `md:hidden`, so a desktop-width
+run skips it as hidden and reports clean. The earlier "zero violations" was
+therefore true only at the width it was measured at, which is worth remembering
+about every automated pass — it tests the page as rendered, not the page.

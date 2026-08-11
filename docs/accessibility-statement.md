@@ -22,9 +22,9 @@ a real browser rather than a simulated DOM.
 | Surface | States covered | Result |
 |---|---|---|
 | `apps/site` | `/`, `/how-it-works`, `/accessibility`, `/research`, `/privacy`, all four demo tabs, the focus-mode overlay, the waitlist form after submission — each in light and dark | **0 violations** |
-| `apps/web` | Sign in, sign up, notes list, an open note, focus mode, the actions view, settings, not-found — the first five also in all four themes | **0 violations** |
+| `apps/web` | Sign in, sign up, notes list, an open note, focus mode, the actions view, settings, not-found — the first five also in all four themes, and the main views again at a narrow viewport | **0 violations** |
 
-Two real defects were found this way and fixed:
+Four real defects were found this way and fixed:
 
 - On the app, muted text measured 4.34:1 on the `accent` surface — it cleared
   4.5:1 on white, which is where it had been checked, but not on the surface it
@@ -33,6 +33,18 @@ Two real defects were found this way and fixed:
   hardcoded hex tuned for a white background. In dark mode it measured
   **2.05–2.71:1**, against a 4.5:1 requirement, across fourteen elements. It is
   now a theme-aware variable with a paired foreground for filled controls.
+- The app's whole notes list sat inside an `aria-live` region. A live region
+  announces its entire subtree whenever anything inside it changes, so every
+  search keystroke would have read out every matching note in full. For an
+  audience this product exists to protect from overwhelm, that is close to the
+  worst possible failure. The live region now covers the count and the status
+  messages only; the list is a labelled `<ul>` a screen reader navigates on its
+  own terms. **Found by reading the accessibility tree, not by axe** — no
+  automated rule flags it.
+- The app's mobile header bar sat outside any landmark. It only appears below
+  768px, so an earlier sweep run at desktop width missed it entirely; the rule
+  skips hidden elements. It is a `<header>` now, and the sweep is run at both
+  widths.
 
 **Automated tools catch a minority of accessibility problems.** A clean axe run
 means the obvious machine-checkable failures are gone. It does not mean the site
@@ -109,10 +121,16 @@ large display type. It is never used for body text.
 These are gaps, not omissions. We would rather publish a short honest list than
 a long implied one.
 
-- **Any testing with a real screen reader.** The markup uses landmarks,
-  heading order, labels and live regions, and the focus-mode overlay traps focus
-  and announces itself — but nobody has yet driven either surface with VoiceOver,
-  NVDA or JAWS. We are not going to claim it works well with them.
+- **Any testing with a real screen reader.** We tried. VoiceOver cannot be
+  started or driven from the development environment used to build this — it
+  will not launch from a script, and the shell lacks the permission to send it
+  keystrokes. What we did instead was read the accessibility tree that a screen
+  reader consumes, control by control, which is how the live-region defect above
+  was found. That is a genuinely useful check and it is **not** a substitute:
+  it cannot tell you how speech actually flows, whether announcements interrupt
+  each other, or whether a symbol like `⌘↵` is pronounced usefully or as
+  "downwards arrow with corner leftwards". Until someone sits down with
+  VoiceOver, NVDA or JAWS, we are not going to claim this works well with them.
 - **An independent third-party audit.** Everything above is our own testing.
 - **Testing with ADHD and neurodivergent users.** The research this product is
   built on names limited user testing as its own headline limitation, and we

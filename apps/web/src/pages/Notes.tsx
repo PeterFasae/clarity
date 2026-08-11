@@ -131,6 +131,14 @@ export function Notes() {
           )}
         </div>
 
+        {/* The live region covers the *status* only — the count, the loading
+            line, an error, the empty state. It deliberately does not wrap the
+            list: an aria-live region announces its entire subtree when anything
+            inside it changes, so putting the <ul> in here meant every keystroke
+            of a search read out every matching note in full. For an audience
+            this product exists to protect from overwhelm, that is about the
+            worst possible failure. The list below is a plain region a screen
+            reader navigates on its own terms. */}
         <div aria-live="polite" className="mt-4">
           {active.isPending && (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -155,20 +163,21 @@ export function Notes() {
           )}
 
           {results.length > 0 && (
-            <>
-              <p className="mb-2 text-sm text-muted-foreground">
-                {searching
-                  ? `${results.length} note${results.length === 1 ? '' : 's'} match “${debounced}”`
-                  : `${results.length} note${results.length === 1 ? '' : 's'}`}
-              </p>
-              <ul className="space-y-2">
-                {results.map((note) => (
-                  <NoteCard key={note.id} note={note} selected={note.id === openId} onOpen={select} />
-                ))}
-              </ul>
-            </>
+            <p className="text-sm text-muted-foreground">
+              {searching
+                ? `${results.length} note${results.length === 1 ? '' : 's'} match “${debounced}”`
+                : `${results.length} note${results.length === 1 ? '' : 's'}`}
+            </p>
           )}
         </div>
+
+        {results.length > 0 && (
+          <ul aria-label={searching ? 'Search results' : 'Your notes'} className="mt-2 space-y-2">
+            {results.map((note) => (
+              <NoteCard key={note.id} note={note} selected={note.id === openId} onOpen={select} />
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="min-w-0">

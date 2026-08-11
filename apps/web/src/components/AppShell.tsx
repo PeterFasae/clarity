@@ -36,7 +36,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         Skip to the page
       </a>
 
-      <div className="flex items-center gap-3 border-b border-border p-3 md:hidden">
+      {/* A <header> rather than a <div>: at narrow widths this bar is the only
+          thing above the nav, and content outside a landmark is content a screen
+          reader user has to hunt for. */}
+      <header className="flex items-center gap-3 border-b border-border p-3 md:hidden">
         <Button
           type="button"
           variant="ghost"
@@ -49,7 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Menu className="h-5 w-5" aria-hidden="true" />
         </Button>
         <span className="text-xl font-bold text-primary">Clarity</span>
-      </div>
+      </header>
 
       {showNav && (
         <nav
