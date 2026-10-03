@@ -11,6 +11,7 @@ import {
 import { LIMITS } from '@clarity/core';
 import { decodeCursor, encodeCursor } from './cursor.js';
 import { NoteTooLargeError } from './errors.js';
+import { retryUnprocessed } from './retry.js';
 import { itemBytes } from './item-size.js';
 
 /**
@@ -44,6 +45,19 @@ function client() {
 export function resetClient() {
   documentClient = undefined;
 }
+
+// Tests substitute a fake client and watch the backoff instead of waiting for it.
+// Production never sets either, so `timing` is empty and retry.js uses the real ones.
+let timing = {};
+
+export const testHooks = {
+  useClient(fake) {
+    documentClient = fake;
+  },
+  useTiming(overrides) {
+    timing = overrides ?? {};
+  },
+};
 
 // Aliased in every expression. DynamoDB's reserved-word list is long and
 // changes; aliasing unconditionally means never having to check it.
@@ -200,19 +214,20 @@ export async function batchGetNotes(noteIds) {
   const found = new Map();
 
   for (let start = 0; start < noteIds.length; start += 100) {
-    let keys = noteIds.slice(start, start + 100).map((noteId) => ({ noteId }));
+    const keys = noteIds.slice(start, start + 100).map((noteId) => ({ noteId }));
 
     // BatchGetItem may return UnprocessedKeys under throttling; retrying them
-    // is the caller's job, and here the caller is us.
-    while (keys.length > 0) {
+    // is the caller's job, and here the caller is us. Retried with backoff,
+    // never straight away: see retry.js.
+    await retryUnprocessed(keys, async (pending) => {
       const response = await client().send(
-        new BatchGetCommand({ RequestItems: { [NOTES_TABLE()]: { Keys: keys } } }),
+        new BatchGetCommand({ RequestItems: { [NOTES_TABLE()]: { Keys: pending } } }),
       );
       for (const item of response.Responses?.[NOTES_TABLE()] ?? []) {
         found.set(item.noteId, item);
       }
-      keys = response.UnprocessedKeys?.[NOTES_TABLE()]?.Keys ?? [];
-    }
+      return response.UnprocessedKeys?.[NOTES_TABLE()]?.Keys ?? [];
+    }, timing);
   }
 
   // Preserve the order the caller asked in — for search that order is the ranking.
@@ -246,16 +261,16 @@ export async function deleteEverythingForUser(userId) {
   const notes = await listAllNotesByUser(userId, { projection: '#noteId' });
 
   for (let start = 0; start < notes.length; start += 25) {
-    let requests = notes
+    const requests = notes
       .slice(start, start + 25)
       .map((note) => ({ DeleteRequest: { Key: { noteId: note.noteId } } }));
 
-    while (requests.length > 0) {
+    await retryUnprocessed(requests, async (pending) => {
       const response = await client().send(
-        new BatchWriteCommand({ RequestItems: { [NOTES_TABLE()]: requests } }),
+        new BatchWriteCommand({ RequestItems: { [NOTES_TABLE()]: pending } }),
       );
-      requests = response.UnprocessedItems?.[NOTES_TABLE()] ?? [];
-    }
+      return response.UnprocessedItems?.[NOTES_TABLE()] ?? [];
+    }, timing);
   }
 
   await client().send(
