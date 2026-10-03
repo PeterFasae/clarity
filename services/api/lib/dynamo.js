@@ -8,7 +8,10 @@ import {
   PutCommand,
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { LIMITS } from '@clarity/core';
 import { decodeCursor, encodeCursor } from './cursor.js';
+import { NoteTooLargeError } from './errors.js';
+import { itemBytes } from './item-size.js';
 
 /**
  * The store, and the seam.
@@ -83,7 +86,16 @@ export async function getNote(noteId) {
   return Item ?? null;
 }
 
+/**
+ * Write a note, unless the finished item would be over the stored-size ceiling.
+ *
+ * Measured on the complete item, attribute names and overhead included, after
+ * the generated fields have been bounded. Nothing is trimmed here to make it
+ * fit: an item that is still too big is refused with `NoteTooLargeError`, and
+ * nothing is written.
+ */
 export async function putNote(note) {
+  if (itemBytes(note) > LIMITS.itemBytes) throw new NoteTooLargeError();
   await client().send(new PutCommand({ TableName: NOTES_TABLE(), Item: note }));
   return note;
 }

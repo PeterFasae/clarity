@@ -1,3 +1,4 @@
+import { LIMITS, toWellFormedText, truncateCodePoints } from '@clarity/core';
 import { localEngine } from './ai/index.js';
 
 /**
@@ -21,11 +22,12 @@ import { localEngine } from './ai/index.js';
  */
 export async function enrich(note, engine, fallback = localEngine) {
   const computed = await compute(note.content, engine, fallback);
+  const { summary, actions } = boundGenerated(computed);
 
   return {
     ...note,
-    summary: computed.summary,
-    actions: computed.actions,
+    summary,
+    actions,
     summarySource: computed.source,
     updatedAt: new Date().toISOString(),
   };
@@ -45,4 +47,25 @@ async function compute(content, engine, fallback) {
     const { summary, actions } = await fallback.analyse(content);
     return { summary, actions, source: fallback.name };
   }
+}
+
+/**
+ * What an engine may hand back, cut down to what a note can carry.
+ *
+ * Both engines can return far more than a stored note has room for: the
+ * extractive summary is the whole note when it has no full stop, and a note of
+ * `todo` lines yields a line each. The limits (ADR 0009) are applied to the
+ * generated fields only, here, on code-point boundaries with the ellipsis
+ * inside the limit, and any unpaired surrogate an engine produced is replaced.
+ * `content` never passes through this function. Nothing is dropped to make an
+ * item fit; the store measures the finished item and refuses it if it is still
+ * too big.
+ */
+export function boundGenerated({ summary, actions }) {
+  return {
+    summary: truncateCodePoints(toWellFormedText(String(summary ?? '')), LIMITS.summary),
+    actions: (actions ?? [])
+      .slice(0, LIMITS.actions)
+      .map((action) => truncateCodePoints(toWellFormedText(String(action)), LIMITS.action)),
+  };
 }

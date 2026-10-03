@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { ActionItemSchema, NoteSchema, ScoredNoteSchema } from './note.js';
 import { PreferencesSchema } from './preferences.js';
+import { LIMITS } from './limits.js';
+import { countCodePoints, isWellFormedText } from './text.js';
 
 /**
  * The API contract.
@@ -37,26 +39,89 @@ function refusedField(code: string, message: string) {
   }) as unknown as z.ZodOptional<z.ZodUndefined>;
 }
 
+const number = new Intl.NumberFormat('en-GB');
+
+/**
+ * Text a person wrote: a note's content, its title, a tag.
+ *
+ * Counted in Unicode code points, never trimmed or normalised. An unpaired
+ * surrogate is `invalid_text` and over the limit is `limit_exceeded`; both are
+ * tagged so `respond.js` can answer with the stable code. The messages say what
+ * is wrong, never what was sent: an error body must not carry the text.
+ */
+function userText(max: number, required?: string) {
+  const base = required ? z.string().min(1, required) : z.string();
+  return base.superRefine((value, ctx) => {
+    if (!isWellFormedText(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'This has a character in it that cannot be saved. Try typing or pasting it again.',
+        params: { clarity: 'invalid_text' },
+      });
+      return;
+    }
+    if (countCodePoints(value) > max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `This is longer than the ${number.format(max)} characters that can be kept.`,
+        params: { clarity: 'limit_exceeded', limit: max },
+      });
+    }
+  });
+}
+
+/** A list with a ceiling on how many items it may hold. */
+function boundedList<T extends z.ZodTypeAny>(item: T, max: number) {
+  return z.array(item).superRefine((list, ctx) => {
+    if (list.length > max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `There are more here than the ${number.format(max)} that can be kept.`,
+        params: { clarity: 'limit_exceeded', limit: max },
+      });
+    }
+  });
+}
+
+const contentSchema = userText(LIMITS.content, 'A note needs some content.');
+const titleSchema = userText(LIMITS.title);
+const tagsSchema = boundedList(userText(LIMITS.tag), LIMITS.tags);
+
+/** A date-time string has no natural length, so it needs one for the item size to be bounded. */
+const reminderSchema = z
+  .string()
+  .datetime()
+  .superRefine((value, ctx) => {
+    if (value.length > LIMITS.reminder) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `This is longer than the ${LIMITS.reminder} characters a reminder can be.`,
+        params: { clarity: 'limit_exceeded', limit: LIMITS.reminder },
+      });
+    }
+  });
+const remindersSchema = boundedList(reminderSchema, LIMITS.reminders);
+
 export const CreateNoteRequestSchema = z.object({
-  content: z.string().min(1, 'A note needs some content.'),
+  content: contentSchema,
   /** Optional. Derived from the first line of `content` when absent. */
-  title: z.string().max(200).optional(),
-  tags: z.array(z.string()).optional(),
+  title: titleSchema.optional(),
+  tags: tagsSchema.optional(),
   pinned: z.boolean().optional(),
-  reminders: z.array(z.string().datetime()).optional(),
+  reminders: remindersSchema.optional(),
   sharedWith: refusedField('sharing_not_available', SHARING_NOT_AVAILABLE),
 });
 export type CreateNoteRequest = z.infer<typeof CreateNoteRequestSchema>;
 
 export const UpdateNoteRequestSchema = z
   .object({
-    content: z.string().min(1),
-    title: z.string().max(200),
-    tags: z.array(z.string()),
+    content: contentSchema,
+    title: titleSchema,
+    tags: tagsSchema,
     pinned: z.boolean(),
     archived: z.boolean(),
     sharedWith: refusedField('sharing_not_available', SHARING_NOT_AVAILABLE),
-    reminders: z.array(z.string().datetime()),
+    reminders: remindersSchema,
   })
   .partial()
   .refine((body) => Object.keys(body).length > 0, { message: 'Nothing to update.' });
@@ -152,4 +217,8 @@ export const ERROR_CODES = {
   aiDisabled: 'ai_disabled', // 409 — llm mode asked for with aiEnabled false
   consentRequired: 'consent_required', // 422 — aiEnabled true with no consent on record
   sharingNotAvailable: 'sharing_not_available', // 422 — sharedWith sent; sharing is not built
+  invalidText: 'invalid_text', // 422 — user text with an unpaired surrogate
+  limitExceeded: 'limit_exceeded', // 422 — a field or a list is over its limit
+  noteTooLarge: 'note_too_large', // 422 — the finished item is over the stored-size ceiling
+  payloadTooLarge: 'payload_too_large', // 413 — the request body is over 1 MiB
 } as const;

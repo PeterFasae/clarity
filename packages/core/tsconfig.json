@@ -15,5 +15,5 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
-  "include": ["index.ts", "note.ts", "preferences.ts", "api.ts"]
+  "include": ["index.ts", "note.ts", "preferences.ts", "api.ts", "text.ts", "limits.ts"]
 }

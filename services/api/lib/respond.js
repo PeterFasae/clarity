@@ -109,6 +109,10 @@ export const notFound = (event, message) =>
  */
 const SPECIFIC_CODES = {
   [ERROR_CODES.sharingNotAvailable]: "Sharing isn't available yet.",
+  [ERROR_CODES.invalidText]:
+    'Some of the text has a character in it that cannot be saved, so nothing was changed. Try typing or pasting it again.',
+  [ERROR_CODES.limitExceeded]:
+    'Something is longer than Clarity can keep, so nothing was changed. The details say which part.',
 };
 
 /**

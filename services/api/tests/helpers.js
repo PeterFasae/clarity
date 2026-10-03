@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
+import { DeleteItemCommand, DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { DDB_PORT, NOTES_TABLE } from './setup/global.js';
 
 export const API_BASE = 'http://localhost:3999/test';
@@ -37,16 +37,22 @@ export const someUser = () => `user-${randomUUID()}`;
  *
  * @returns {Promise<{ status: number, headers: Headers, body: any }>}
  */
-export async function api(method, pathname, { as, body, origin, headers = {} } = {}) {
+export async function api(method, pathname, { as, body, rawBody, origin, headers = {} } = {}) {
   const response = await fetch(`${API_BASE}${pathname}`, {
     method,
     headers: {
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(body !== undefined || rawBody !== undefined ? { 'Content-Type': 'application/json' } : {}),
       ...(as ? { Authorization: `Bearer ${tokenFor(as)}` } : {}),
       ...(origin ? { Origin: origin } : {}),
       ...headers,
     },
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    // `rawBody` is a string sent exactly as given, for tests about how a body
+    // is encoded rather than what is in it.
+    ...(rawBody !== undefined
+      ? { body: rawBody }
+      : body !== undefined
+        ? { body: JSON.stringify(body) }
+        : {}),
   });
 
   const text = await response.text();
@@ -89,6 +95,14 @@ export async function createNote(as, body) {
   return response.body.note;
 }
 
+function rawClient() {
+  return new DynamoDBClient({
+    endpoint: `http://localhost:${DDB_PORT}`,
+    region: 'eu-north-1',
+    credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
+  });
+}
+
 /**
  * A note exactly as DynamoDB holds it, in the wire form (`{ S: ... }`), with
  * nothing unmarshalled or reshaped. This is what the item-size rules are
@@ -97,13 +111,27 @@ export async function createNote(as, body) {
  * @returns {Promise<Record<string, object> | undefined>}
  */
 export async function rawStoredNote(noteId) {
-  const client = new DynamoDBClient({
-    endpoint: `http://localhost:${DDB_PORT}`,
-    region: 'eu-north-1',
-    credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
-  });
-  const { Item } = await client.send(
+  const { Item } = await rawClient().send(
     new GetItemCommand({ TableName: NOTES_TABLE, Key: { noteId: { S: noteId } }, ConsistentRead: true }),
   );
   return Item;
+}
+
+/**
+ * Put an item straight into the notes table, bypassing the API, and say
+ * whether DynamoDB took it. For tests about DynamoDB's own limits.
+ *
+ * @returns {Promise<{ accepted: boolean, error?: Error }>}
+ */
+export async function rawPutNote(item) {
+  try {
+    await rawClient().send(new PutItemCommand({ TableName: NOTES_TABLE, Item: item }));
+    return { accepted: true };
+  } catch (error) {
+    return { accepted: false, error };
+  }
+}
+
+export async function rawDeleteNote(noteId) {
+  await rawClient().send(new DeleteItemCommand({ TableName: NOTES_TABLE, Key: { noteId: { S: noteId } } }));
 }

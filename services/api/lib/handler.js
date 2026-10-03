@@ -1,7 +1,7 @@
 import { ZodError } from 'zod';
-import { ERROR_CODES } from '@clarity/core';
+import { ERROR_CODES, LIMITS } from '@clarity/core';
 import { getUserId } from './auth.js';
-import { ForbiddenError, NotFoundError } from './errors.js';
+import { ForbiddenError, NoteTooLargeError, NotFoundError, PayloadTooLargeError } from './errors.js';
 import { failure, forbidden, notFound, unauthenticated, validationFailed } from './respond.js';
 
 /**
@@ -19,8 +19,25 @@ export function withAuth(fn) {
     if (!userId) return unauthenticated(event);
 
     try {
+      assertBodyWithinLimit(event);
       return await fn(event, userId);
     } catch (error) {
+      if (error instanceof PayloadTooLargeError) {
+        return failure(
+          event,
+          413,
+          ERROR_CODES.payloadTooLarge,
+          'That is too big to send in one go, so nothing was changed. If it is a long note, try splitting it into two.',
+        );
+      }
+      if (error instanceof NoteTooLargeError) {
+        return failure(
+          event,
+          422,
+          ERROR_CODES.noteTooLarge,
+          'This note, with everything Clarity works out from it, is too big to keep in one piece, so nothing was changed. Try splitting it into two notes.',
+        );
+      }
       if (error instanceof ForbiddenError) return forbidden(event, error.message);
       if (error instanceof NotFoundError) return notFound(event, error.message);
       if (error instanceof ZodError) return validationFailed(event, error);
@@ -53,4 +70,23 @@ export function parseBody(event, schema) {
 /** Query strings arrive as `null` rather than `{}` when there are none. */
 export function parseQuery(event, schema) {
   return schema.parse(event.queryStringParameters ?? {});
+}
+
+/**
+ * The request body's size in bytes, after any base64 decoding, checked before
+ * anything parses it. A body over the limit costs a length check and nothing
+ * else.
+ */
+export function assertBodyWithinLimit(event) {
+  const body = event?.body;
+  if (typeof body !== 'string') return;
+
+  const bytes = event.isBase64Encoded ? base64DecodedLength(body) : Buffer.byteLength(body, 'utf8');
+  if (bytes > LIMITS.bodyBytes) throw new PayloadTooLargeError();
+}
+
+function base64DecodedLength(encoded) {
+  const clean = encoded.replace(/\s/g, '');
+  const padding = clean.endsWith('==') ? 2 : clean.endsWith('=') ? 1 : 0;
+  return Math.floor((clean.length * 3) / 4) - padding;
 }

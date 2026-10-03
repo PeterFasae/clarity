@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { sliceCodePoints } from './text.js';
 
 /**
  * The canonical Note.
@@ -77,12 +78,13 @@ export const COMPUTED_NOTE_FIELDS = ['summary', 'actions', 'summarySource'] as c
 /**
  * The title rule, in one place because both the API (on write) and the app (for
  * its optimistic preview) need it and they must agree: first non-empty line,
- * leading `#` stripped, capped at 60 characters.
+ * leading `#` stripped, capped at 60 characters. Characters are code points, so
+ * an emoji on the boundary is kept whole rather than cut in half.
  */
 export function deriveTitle(content: string): string {
   const firstLine = String(content)
     .split('\n')
     .find((line) => line.trim());
   if (!firstLine) return 'Untitled';
-  return firstLine.trim().replace(/^#+\s*/, '').slice(0, 60) || 'Untitled';
+  return sliceCodePoints(firstLine.trim().replace(/^#+\s*/, ''), 60) || 'Untitled';
 }
