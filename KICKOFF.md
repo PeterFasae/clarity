@@ -2,7 +2,7 @@
 
 **The brief for picking this project back up.** Read the block below at the start of a work session in this directory — it says what Clarity is, what is already settled, and where to look for the rest.
 
-> **Updated 3 October 2026.** This brief was written before Phase 0. Phases 0–3 of BUILD.md are now built locally, with 121 tests passing, and nothing has been deployed. Do not start at Phase 0. The current plan is [`docs/plan/backend-roadmap.md`](docs/plan/backend-roadmap.md) and the decisions made so far are in [`docs/decision-log.md`](docs/decision-log.md). The block below is kept as written, for the history and the settled product rules.
+> **Updated 3 October 2026.** This brief was written before Phase 0. Phases 0–3 of BUILD.md are now built locally, with 243 tests passing (121 when Phase 3 closed), and nothing has been deployed. Do not start at Phase 0. The current plan is [`docs/plan/backend-roadmap.md`](docs/plan/backend-roadmap.md) and the decisions made so far are in [`docs/decision-log.md`](docs/decision-log.md). The block below is kept as written, for the history and the settled product rules.
 
 ---
 

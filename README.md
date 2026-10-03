@@ -25,7 +25,7 @@ it back out was.
 
 ```bash
 npm install
-npm test                     # 121 tests; the retrieval engine's 25 must stay green
+npm test                     # 243 tests; the retrieval engine's 25 must stay green
 npm run build                # typecheck + build every workspace
 
 npm run dev -w apps/web            # the product SPA     → :8080

@@ -10,7 +10,7 @@
   - DynamoDB Local accepts an item of exactly 409,600 bytes and rejects 409,601, which matches those rules applied to the marshalled item.
   - **Today's code already fails.** The extractive summary is the whole note when it has no full stop, and action extraction is unbounded, so the stored item holds the content twice or more. Measured: 100,000 Chinese characters with no full stop gives a 600 KB item, 60,000 emoji gives 480 KB, and a note of 60,000 `todo` lines gives 2.4 MB. All three are rejected by DynamoDB, so the API returns a 500.
   - **100,000 four-byte characters can never fit.** They measure 437 KB to 449 KB with the other fields present.
-  - **With the limits below and every field at its cap** (four-byte text throughout, and all the week 3 attributes present), the item measured 289,464 bytes and DynamoDB Local accepted it.
+  - **With the limits below and every field at its cap** (four-byte text throughout, and all the week 3 attributes present), the item measured 289,464 bytes and DynamoDB Local accepted it. The automated test that saves the largest note through the API and measures the stored item, before the week 3 attributes exist, measured 286,973 bytes (its content has 238,410 bytes, because the `todo` lines that force the maximum generated output start with ASCII).
   - **A request can be larger than the text in it.** The largest valid request is 244,998 bytes as plain UTF-8 JSON, 732,998 bytes when every non-ASCII character is written as a `\uXXXX` escape (Python's `json.dumps` does this by default), and 360,014 bytes for 60,000 control characters each written as `\u0001`. A 256 KB body limit would have refused valid notes.
   - [Lambda quotas](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html): 6 MB request payload for synchronous invocation, so 1 MiB is well inside it.
 
@@ -116,7 +116,7 @@ Then:
 - Architecture §2's limits table is replaced by this one.
 
 ## How to explain this
-Every limit is counted in characters a person would recognise (Unicode code points), and the ceiling is measured in the bytes DynamoDB actually charges. The numbers were chosen backwards from the 400 KB item limit: the largest note, all its metadata and the largest generated summary and actions measure about 289 KB, and the API refuses to write anything over 350,000. Generated text is capped and shortened by the server, so a long note can never make itself unsaveable, and the user's own text is never cut. The request-body limit is separate and larger, because the same note can be sent as plain text or fully escaped and has to fit either way. A refusal always says which part was too long and changes nothing.
+Every limit is counted in characters a person would recognise (Unicode code points), and the ceiling is measured in the bytes DynamoDB actually charges. The numbers were chosen backwards from the 400 KB item limit: the largest note, all its metadata and the largest generated summary and actions measure about 287 to 289 KB, and the store refuses to write anything over 350,000. Generated text is capped and shortened by the server, so a long note can never make itself unsaveable, and the user's own text is never cut. The request-body limit is separate and larger, because the same note can be sent as plain text or fully escaped and has to fit either way. A refusal always says which part was too long and changes nothing.
 
 ## Questions a reviewer will ask
 - **Q:** Why 60,000 characters and not more?
