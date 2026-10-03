@@ -74,6 +74,24 @@ describe('describeError', () => {
     expect(describeError(error)).toEqual({ name: 'ThrottlingException', status: 400 });
   });
 
+  test('a name is logged only if it is a known class: an error named with the note is OtherError', () => {
+    for (const name of [MARKER, `BadRequestError ${MARKER}`, 'bad request error', `${MARKER}\nBadRequestError`]) {
+      const error = new Error('x');
+      error.name = name;
+
+      expect(describeError(error)).toEqual({ name: 'OtherError' });
+      expect(JSON.stringify(describeError(error, { frames: true }))).not.toContain(MARKER);
+    }
+  });
+
+  test('a status that is not an HTTP status is left out', () => {
+    const error = Object.assign(new Error('x'), { status: `${MARKER}` });
+    const other = Object.assign(new Error('x'), { status: 99999 });
+
+    expect(describeError(error)).toEqual({ name: 'Error' });
+    expect(describeError(other)).toEqual({ name: 'Error' });
+  });
+
   test('copes with things that are not errors', () => {
     expect(describeError(undefined)).toEqual({ name: 'UnknownError' });
     expect(describeError('a string with the note in it')).toEqual({ name: 'UnknownError' });
@@ -94,6 +112,35 @@ describe('describeError', () => {
     error.stack = `something else\n    at ${MARKER} (file)`;
 
     expect(describeError(error, { frames: true }).frames).toEqual([]);
+  });
+});
+
+describe('an error named with the note’s words', () => {
+  const named = () => {
+    const error = new Error('plain message');
+    error.name = `${MARKER} Error`;
+    return error;
+  };
+
+  test('is not written to the log when the AI engine fails', async () => {
+    const failing = { name: 'llm', analyse: async () => Promise.reject(named()) };
+
+    await enrich(note('Some words'), failing);
+
+    expect(everythingLogged()).not.toContain(MARKER);
+    expect(spies[2].mock.calls[0][1]).toEqual({ name: 'OtherError' });
+  });
+
+  test('is not written to the log when a handler fails, nor shown to the caller', async () => {
+    const handler = withAuth(async () => {
+      throw named();
+    });
+
+    const response = await handler({ headers: {}, requestContext: { authorizer: { claims: { sub: 'someone' } } } });
+
+    expect(response.body).not.toContain(MARKER);
+    expect(everythingLogged()).not.toContain(MARKER);
+    expect(spies[3].mock.calls[0][1]).toMatchObject({ name: 'OtherError' });
   });
 });
 
