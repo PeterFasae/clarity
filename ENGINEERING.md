@@ -83,7 +83,6 @@ Per report §4.3C.
 | `tags` | L\<S\> | User-set today; LLM-suggested later, always dismissible |
 | `pinned` | BOOL | |
 | `archived` | BOOL | |
-| `sharedWith` | L\<M\> | `{ email, permission: "read" \| "write" }` |
 | `reminders` | L\<S\> | ISO-8601 timestamps |
 
 **GSI `UserIdIndex`:** PK `userId`, SK `updatedAt`. Every list, filter and search path goes through it. Filter views (`pinned`, `archived`) apply a `FilterExpression` after the query — as report §4.3C describes. Pagination uses `ExclusiveStartKey`, surfaced to clients as an opaque `cursor` string.
@@ -119,7 +118,7 @@ All routes sit behind an API Gateway REST API with a **Cognito JWT authorizer**.
 | Method | Path | Notes |
 |---|---|---|
 | `POST` | `/notes` | Create. Computes summary + actions on write. |
-| `GET` | `/notes` | `?q=` search · `?filter=pinned\|archived\|shared` · `?limit=` · `?cursor=` |
+| `GET` | `/notes` | `?q=` search · `?filter=pinned\|archived` · `?limit=` · `?cursor=` |
 | `GET` | `/notes/{id}` | **Missing in the predecessor despite the frontend calling it.** |
 | `PUT` | `/notes/{id}` | Recomputes summary + actions. |
 | `DELETE` | `/notes/{id}` | |
@@ -213,7 +212,7 @@ Every one of these is present in `~/Downloads/adhd-notetaker-system-main/`. If y
 | `Note` used `id`/`isPinned`/`isArchived` in the frontend and `_id`/`pinned`/`archived` in Mongo, with nothing mapping between them — so `note.id` was `undefined` and every per-note call hit a bad path | One type in `packages/core`; serialisation in `lib/respond.js` |
 | The summariser **overwrote `content`** with the summary; the `summary` field existed and was never populated | Separate fields; `content` is never written by `enrich()` |
 | `GET /notes/{id}` was called by the frontend and had no route | Routed in `serverless.yml` |
-| `isShared` sent by the UI was silently dropped | `sharedWith` is the only sharing representation |
+| `isShared` sent by the UI was silently dropped | There is no sharing surface until sharing is designed; a request that sends `sharedWith` gets `422 sharing_not_available` ([ADR 0008](docs/adr/0008-remove-dormant-sharedwith.md)) |
 | `userId` defaulted to the literal `"default-user"`; no handler checked ownership | Cognito `claims.sub`; ownership asserted everywhere |
 | CORS `*` on every handler, each with its own copy of the headers object | One `respond.js`, origin allowlist |
 | Four routes mapped to the same `getNotes.handler`, which branched on `event.path` because the frontend never sent query params | One `getNotes` handler, filters via query string |

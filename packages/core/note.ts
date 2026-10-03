@@ -24,16 +24,6 @@ import { z } from 'zod';
 export const SummarySourceSchema = z.enum(['local', 'llm']);
 export type SummarySource = z.infer<typeof SummarySourceSchema>;
 
-export const SharePermissionSchema = z.enum(['read', 'write']);
-export type SharePermission = z.infer<typeof SharePermissionSchema>;
-
-/** `sharedWith` is the only representation of sharing. There is no `isShared`. */
-export const ShareSchema = z.object({
-  email: z.string().email(),
-  permission: SharePermissionSchema,
-});
-export type Share = z.infer<typeof ShareSchema>;
-
 /** The persisted item. Attribute names match the table exactly. */
 export const StoredNoteSchema = z.object({
   /** Partition key. */
@@ -55,7 +45,6 @@ export const StoredNoteSchema = z.object({
   tags: z.array(z.string()),
   pinned: z.boolean(),
   archived: z.boolean(),
-  sharedWith: z.array(ShareSchema),
   /** ISO-8601 timestamps. */
   reminders: z.array(z.string().datetime()),
 });

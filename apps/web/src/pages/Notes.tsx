@@ -14,7 +14,6 @@ const FILTERS: { id: NoteFilter | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'pinned', label: 'Pinned' },
   { id: 'archived', label: 'Archived' },
-  { id: 'shared', label: 'Shared' },
 ];
 
 /**
@@ -254,17 +253,6 @@ function EmptyState({
         <p className="font-bold">Nothing archived.</p>
         <p className="mt-2 text-sm text-muted-foreground">
           Archiving moves a note out of the way without deleting it. Search still finds it.
-        </p>
-      </div>
-    );
-  }
-
-  if (filter === 'shared') {
-    return (
-      <div className="rounded-lg border border-dashed border-border p-6">
-        <p className="font-bold">Nothing shared.</p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sharing a note with someone else is still being built.
         </p>
       </div>
     );

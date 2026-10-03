@@ -54,7 +54,6 @@ const NAMES = {
   '#tags': 'tags',
   '#pinned': 'pinned',
   '#archived': 'archived',
-  '#sharedWith': 'sharedWith',
   '#updatedAt': 'updatedAt',
 };
 
@@ -122,7 +121,6 @@ export async function deleteNoteOwnedBy(noteId, userId) {
 const FILTERS = {
   pinned: { expression: '#pinned = :true', values: { ':true': true } },
   archived: { expression: '#archived = :true', values: { ':true': true } },
-  shared: { expression: 'size(#sharedWith) > :zero', values: { ':zero': 0 } },
 };
 
 /**

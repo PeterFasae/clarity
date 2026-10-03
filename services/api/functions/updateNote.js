@@ -26,7 +26,6 @@ export const handler = withAuth(async (event, userId) => {
     ...(body.tags !== undefined ? { tags: body.tags } : {}),
     ...(body.pinned !== undefined ? { pinned: body.pinned } : {}),
     ...(body.archived !== undefined ? { archived: body.archived } : {}),
-    ...(body.sharedWith !== undefined ? { sharedWith: body.sharedWith } : {}),
     ...(body.reminders !== undefined ? { reminders: body.reminders } : {}),
   };
 

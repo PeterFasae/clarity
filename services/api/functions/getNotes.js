@@ -8,7 +8,7 @@ import { ok, toWireNote } from '../lib/respond.js';
  * GET /notes — list, filter and search, all through one handler.
  *
  *   ?q=       rank the user's notes with search() from @clarity/retrieval
- *   ?filter=  pinned | archived | shared
+ *   ?filter=  pinned | archived
  *   ?limit= / ?cursor=   pagination over the UserIdIndex GSI
  *
  * The predecessor pointed four separate routes at this handler and branched on

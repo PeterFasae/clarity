@@ -91,7 +91,6 @@ describe('serialisation', () => {
     tags: [],
     pinned: false,
     archived: false,
-    sharedWith: [],
     reminders: [],
     createdAt: '2026-08-10T09:00:00.000Z',
     updatedAt: '2026-08-10T09:00:00.000Z',

@@ -35,10 +35,11 @@ describe('listing', () => {
     expect(response.body.notes.map((note) => note.id)).toEqual([created[1].id]);
   });
 
-  test('?filter=shared returns nothing when nothing is shared', async () => {
+  test('?filter=shared is refused, because sharing is not built', async () => {
     const response = await api('GET', '/notes?filter=shared', { as: user });
 
-    expect(response.body.notes).toEqual([]);
+    expect(response.status).toBe(422);
+    expect(response.body.error).toBe('validation_failed');
   });
 
   test('rejects a filter it does not know', async () => {

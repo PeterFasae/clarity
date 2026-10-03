@@ -102,15 +102,35 @@ export const forbidden = (event, message) =>
 export const notFound = (event, message) =>
   failure(event, 404, ERROR_CODES.notFound, message ?? 'No such note.');
 
+/**
+ * A schema can tag an issue with a more specific stable code
+ * (`params.clarity`). When one request breaks several rules, the first code in
+ * this list wins; `details` still names every path that failed.
+ */
+const SPECIFIC_CODES = {
+  [ERROR_CODES.sharingNotAvailable]: "Sharing isn't available yet.",
+};
+
+/**
+ * Zod's own message for an enum names the value it was sent, which is the
+ * client's input echoed back. Say the same thing without the echo.
+ */
+const detailMessage = (issue) =>
+  issue.code === 'invalid_enum_value' ? 'That is not one of the allowed values.' : issue.message;
+
 /** Turns a zod error into the documented `details` array. */
-export const validationFailed = (event, zodError) =>
-  failure(
+export const validationFailed = (event, zodError) => {
+  const tagged = new Set(zodError.issues.map((issue) => issue.params?.clarity));
+  const code = Object.keys(SPECIFIC_CODES).find((candidate) => tagged.has(candidate));
+
+  return failure(
     event,
     422,
-    ERROR_CODES.validationFailed,
-    'That request was not in a shape we understand.',
+    code ?? ERROR_CODES.validationFailed,
+    code ? SPECIFIC_CODES[code] : 'That request was not in a shape we understand.',
     zodError.issues.map((issue) => ({
       path: issue.path.join('.'),
-      message: issue.message,
+      message: detailMessage(issue),
     })),
   );
+};

@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
+import { DDB_PORT, NOTES_TABLE } from './setup/global.js';
 
 export const API_BASE = 'http://localhost:3999/test';
 export const ALLOWED_ORIGIN = 'http://localhost:8080';
@@ -85,4 +87,23 @@ export async function createNote(as, body) {
     throw new Error(`createNote failed: ${response.status} ${JSON.stringify(response.body)}`);
   }
   return response.body.note;
+}
+
+/**
+ * A note exactly as DynamoDB holds it, in the wire form (`{ S: ... }`), with
+ * nothing unmarshalled or reshaped. This is what the item-size rules are
+ * defined over, so it is what the size tests measure.
+ *
+ * @returns {Promise<Record<string, object> | undefined>}
+ */
+export async function rawStoredNote(noteId) {
+  const client = new DynamoDBClient({
+    endpoint: `http://localhost:${DDB_PORT}`,
+    region: 'eu-north-1',
+    credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
+  });
+  const { Item } = await client.send(
+    new GetItemCommand({ TableName: NOTES_TABLE, Key: { noteId: { S: noteId } }, ConsistentRead: true }),
+  );
+  return Item;
 }

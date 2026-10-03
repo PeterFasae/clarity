@@ -33,7 +33,7 @@ export const API_BASE = `http://localhost:${API_PORT}/${STAGE}`;
 export const ALLOWED_ORIGIN = 'http://localhost:8080';
 
 const serverless = yaml.load(readFileSync(path.join(SERVICE_ROOT, 'serverless.yml'), 'utf8'));
-const NOTES_TABLE = `${serverless.service}-notes-${STAGE}`;
+export const NOTES_TABLE = `${serverless.service}-notes-${STAGE}`;
 const PREFERENCES_TABLE = `${serverless.service}-preferences-${STAGE}`;
 
 const CHILD_ENV = {
