@@ -19,7 +19,7 @@ const IMPLEMENTED = [
   "Light and dark themes, saved on your device \u2014 no cookies, so no cookie banner.",
   "Zero automated accessibility violations on every page, in both themes, including the interactive demo and its focus-mode overlay.",
   "Colour contrast measured in both themes. Every text pair we ship is listed below; the lowest is 5.6:1 against a 4.5:1 requirement.",
-  "The interactive demo runs entirely in your browser, so nothing about it depends on a network connection.",
+  "The summarise and focus-mode demos run in your browser and do not need a connection. The voice demo uses your browser\u2019s speech recognition, which in some browsers does.",
 ];
 
 const NOT_YET = [

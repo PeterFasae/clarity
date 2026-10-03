@@ -17,7 +17,7 @@
       "group": "capture",
       "status": "in-progress",
       "publicCopy": "Speak instead of type when typing feels like too much. Your words become editable text as you go.",
-      "note": "Built into the capture box, in browsers that support it; elsewhere the control is absent and the reason is stated. Not deployed yet."
+      "note": "Built into the capture box, in browsers that support it; elsewhere the control is absent and the reason is stated. It uses the browser's own speech recognition, which in Chrome sends the audio to an online speech service; Clarity never receives it. The privacy copy says so. On-device recognition, where the browser supports it, is planned for the frontend phase. Not deployed yet."
     },
     {
       "id": "light-structure",

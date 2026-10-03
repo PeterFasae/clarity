@@ -45,11 +45,15 @@ export function Privacy() {
             <div>
               <h2 className="text-2xl">The interactive demo</h2>
               <p className="mt-3 text-ink-muted">
-                The voice, summarise, and focus-mode demos all run entirely in
-                your browser. If you use the microphone, the audio is processed by
-                your browser&rsquo;s built-in speech recognition and is not sent to
-                us — we never receive it, store it, or see it. The text you type
-                into the demo stays on your screen and is never transmitted.
+                The summarise and focus-mode demos run entirely in your browser.
+                The voice demo uses your browser&rsquo;s own speech recognition,
+                and in some browsers, Chrome among them, that sends the audio to
+                an online speech service run by the browser&rsquo;s maker. We
+                never receive that audio, store it, or see it, but we
+                can&rsquo;t promise it stays on your device. If you would rather it
+                did, use the sample instead of the microphone. The text you type
+                into the demo stays on your screen and is never transmitted to
+                us.
               </p>
             </div>
           </Reveal>

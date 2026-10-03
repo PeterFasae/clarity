@@ -3,7 +3,9 @@ import { Mic, MicOff, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 /**
- * "Speak it" — live voice-to-text via the Web Speech API, entirely in-browser.
+ * "Speak it" — live voice-to-text via the Web Speech API. The recognition is the
+ * browser's own, and in Chrome that is an online service, so the audio may leave
+ * the device; the privacy page says so.
  * Never renders a broken mic: if the API is missing or permission is denied, it
  * falls back to a "Play sample" button that types a realistic transcript.
  */

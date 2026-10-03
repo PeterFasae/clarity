@@ -134,6 +134,7 @@ export function QuickCapture() {
             variant={speech.listening ? 'secondary' : 'outline'}
             onClick={speech.listening ? speech.stop : speech.start}
             aria-pressed={speech.listening}
+            aria-describedby="dictation-privacy"
           >
             {speech.listening ? (
               <>
@@ -152,6 +153,14 @@ export function QuickCapture() {
           <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
             <MicOff className="h-4 w-4" aria-hidden="true" />
             Dictation needs Chrome or Edge. Typing works everywhere.
+          </p>
+        )}
+
+        {speech.supported && (
+          // Said where the choice is made. Browser dictation is usually an online
+          // service, so the audio can leave the device even though Clarity never gets it.
+          <p id="dictation-privacy" className="text-sm text-muted-foreground">
+            Dictation uses your browser&rsquo;s speech service, which may send your voice to it.
           </p>
         )}
 
