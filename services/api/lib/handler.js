@@ -2,6 +2,7 @@ import { ZodError } from 'zod';
 import { ERROR_CODES, LIMITS } from '@clarity/core';
 import { getUserId } from './auth.js';
 import { ForbiddenError, NoteTooLargeError, NotFoundError, PayloadTooLargeError } from './errors.js';
+import { describeError } from './log.js';
 import { failure, forbidden, notFound, unauthenticated, validationFailed } from './respond.js';
 
 /**
@@ -45,7 +46,7 @@ export function withAuth(fn) {
         return failure(event, 409, ERROR_CODES.aiDisabled, error.message);
       }
 
-      console.error('Unhandled error', error);
+      console.error('Unhandled error', describeError(error, { frames: true }));
       return failure(event, 500, 'internal_error', 'Something went wrong at our end.');
     }
   };

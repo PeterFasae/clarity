@@ -1,5 +1,6 @@
 import { LIMITS, toWellFormedText, truncateCodePoints } from '@clarity/core';
 import { localEngine } from './ai/index.js';
+import { describeError } from './log.js';
 
 /**
  * Compute-on-write.
@@ -41,8 +42,13 @@ async function compute(content, engine, fallback) {
     if (engine.name === fallback.name) throw error;
 
     // Logged rather than surfaced: the user asked for a better summary and got
-    // a working one, which is not an error they can act on.
-    console.warn(`The ${engine.name} engine failed; falling back to ${fallback.name}.`, error);
+    // a working one, which is not an error they can act on. Only the error's
+    // class and status are logged. The SDK's error object carries the request,
+    // and a JSON parse error quotes the model's answer, which quotes the note.
+    console.warn(
+      `The ${engine.name} engine failed; falling back to ${fallback.name}.`,
+      describeError(error),
+    );
 
     const { summary, actions } = await fallback.analyse(content);
     return { summary, actions, source: fallback.name };
