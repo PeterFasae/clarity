@@ -220,6 +220,8 @@ otherwise every client would have to follow it with a GET to stay consistent.
 
 ### 1.7 — Integration tests run against DynamoDB Local and `serverless offline`
 
+> **Superseded in part by [ADR 0007](adr/0007-in-process-test-rig-and-route-manifest.md) (3 October 2026).** DynamoDB Local and one shared table definition stay. `serverless offline` and `serverless.yml` as the source of the tables are replaced by in-process handlers, a loopback-only adapter and a route manifest, once the replacement passes all existing tests.
+
 The rig starts the real DynamoDB engine as a Java process and the real routing
 and authorizer layer, and builds both tables from the CloudFormation resources
 in `serverless.yml` rather than from a second copy of the schema — so a schema
@@ -278,6 +280,8 @@ a real user is near that number, and `search(query, notes, opts) → [{note,
 score}]` is shaped so the scorer can be replaced without touching a caller.
 
 ### 1.11 — `npm run dev:local` reuses the test rig
+
+> **Superseded in part by [ADR 0007](adr/0007-in-process-test-rig-and-route-manifest.md) (3 October 2026).** `dev:local` will keep reusing the test rig, which becomes the in-process rig plus the loopback adapter.
 
 `npm run dev -w services/api` is plain `serverless offline` against real AWS
 tables, which needs a deployed stage. `dev:local` raises DynamoDB Local and

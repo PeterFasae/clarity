@@ -2,7 +2,7 @@
 
 Engineering map for Clarity. This file covers **how the system is built**. See [CONTEXT.md](CONTEXT.md) for what it is and why, and [BUILD.md](BUILD.md) for the phased spec and acceptance criteria.
 
-> **Status: Phase 0 not started.** The workspace described below does not exist yet — this document is the target state. Source material lives at `~/Downloads/adhd-notetaker-system-main/` and `github.com/PeterFasae/clarity`.
+> **Status (3 October 2026): Phases 0–3 are built, locally only. Nothing has been deployed.** The workspace below exists and 121 tests pass. This file was written as the target state before Phase 0 and describes the Serverless Framework v3 setup, which is being replaced: the region (London), the infrastructure tooling (AWS CDK in TypeScript on Node.js 24) and the local test rig were decided on 3 October 2026 in [ADR 0005](docs/adr/0005-london-region.md), [ADR 0006](docs/adr/0006-cdk-typescript-node24.md) and [ADR 0007](docs/adr/0007-in-process-test-rig-and-route-manifest.md), and the code has not been moved over yet. Until it is, treat the Serverless-specific sections below (layout, commands, route wiring) as a description of today's code, not of where it is going. The plan is [`docs/plan/backend-roadmap.md`](docs/plan/backend-roadmap.md). The target design is [`docs/plan/backend-architecture.md`](docs/plan/backend-architecture.md).
 
 ---
 

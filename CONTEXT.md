@@ -113,6 +113,8 @@ One repository. `packages/retrieval` holds the tested engine verbatim; `packages
 
 ### 4.4 — Backend: **AWS Lambda + DynamoDB + Cognito**
 
+> **Updated 3 October 2026.** The stack stands. The region is now Europe (London), `eu-west-2` ([ADR 0005](docs/adr/0005-london-region.md)), and the tooling is AWS CDK v2 in TypeScript on Node.js 24 ([ADR 0006](docs/adr/0006-cdk-typescript-node24.md)), replacing the Serverless Framework v3 and `eu-north-1` setup this section was written around.
+
 Exactly the architecture the research report describes. **[report §3.3, §4.2, §4.3]**
 
 *Why:* the report documents this stack as the deployed system and publishes measured results against it. Building it makes the dissertation **true** rather than something that has to be amended. It also fits the institutional/DSA story, where an AWS-native, IAM-isolated, encrypted-at-rest posture is easier to procure against.

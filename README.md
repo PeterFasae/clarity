@@ -15,12 +15,17 @@ it back out was.
 > [`docs/status.json`](docs/status.json) is the registry of what actually exists,
 > and no public copy may describe a feature in the present tense unless that file
 > says it's `built`.
+>
+> Phases 0–3 are built locally and nothing has been deployed yet. The current
+> plan is [`docs/plan/backend-roadmap.md`](docs/plan/backend-roadmap.md), the
+> target design is [`docs/plan/backend-architecture.md`](docs/plan/backend-architecture.md),
+> and decisions are recorded in [`docs/decision-log.md`](docs/decision-log.md).
 
 ## Running it
 
 ```bash
 npm install
-npm test                     # the retrieval engine's 25 tests
+npm test                     # 121 tests; the retrieval engine's 25 must stay green
 npm run build                # typecheck + build every workspace
 
 npm run dev -w apps/web            # the product SPA     → :8080

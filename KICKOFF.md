@@ -2,6 +2,8 @@
 
 **The brief for picking this project back up.** Read the block below at the start of a work session in this directory — it says what Clarity is, what is already settled, and where to look for the rest.
 
+> **Updated 3 October 2026.** This brief was written before Phase 0. Phases 0–3 of BUILD.md are now built locally, with 121 tests passing, and nothing has been deployed. Do not start at Phase 0. The current plan is [`docs/plan/backend-roadmap.md`](docs/plan/backend-roadmap.md) and the decisions made so far are in [`docs/decision-log.md`](docs/decision-log.md). The block below is kept as written, for the history and the settled product rules.
+
 ---
 
 ```
@@ -23,7 +25,7 @@ Clarity in three sentences:
   filing cabinet"; the engineering thesis is "capture was never the problem, getting it
   back out was".
 
-This is a merge of three sources, none of which is in this repo yet:
+This is a merge of three sources (at the time of writing none of them was in this repo yet; all three are now merged):
   ~/Downloads/adhd-notetaker-system-main/   frontend/, backend/, public_website/
   github.com/PeterFasae/clarity             shared/retrieval.js + its 25 tests
   docs/research-report.pdf                  the 60pp source of record (already here)
@@ -58,7 +60,7 @@ Non-negotiables:
 A gate that fails gets reported with its output, not worked around.
 Record non-obvious calls as short ADRs in docs/decisions.md.
 
-Start with Phase 0 in BUILD.md.
+Start with Phase 0 in BUILD.md. (Superseded: see the note at the top of this file.)
 ```
 
 ---
