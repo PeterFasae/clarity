@@ -72,7 +72,16 @@ Peter's words, 3 October 2026:
 - `docs/decisions.md` 1.7 and 1.11 carry a note pointing here.
 
 ## How to explain this
-To be filled in when this lands.
+The tests used to depend on a plugin that emulates API Gateway from `serverless.yml`, and that file goes away with the move to CDK. The replacement runs the real handlers in-process against the real DynamoDB engine (DynamoDB Local), with a small local HTTP adapter so the web app can still talk to them. One route manifest feeds CDK, the adapter and the tests, and a test compares it with the synthesised CloudFormation template, so a route cannot exist in one place and not another. What no local rig can prove is API Gateway's own behaviour, such as refusing a bad Cognito token, so that is checked by smoke tests against staging.
 
 ## Questions a reviewer will ask
-To be filled in when this lands.
+- **Q:** What does the new rig not prove?
+  **A:** That API Gateway's Cognito authorizer rejects bad tokens, and that real CORS and routing behave as local code does. The old rig had the same limit (decisions.md 1.8). Staging smoke tests cover it.
+- **Q:** How do you know the adapter and the deployed API expose the same routes?
+  **A:** Both are generated from one manifest, and a consistency test fails if the synthesised template and the manifest differ in either direction.
+- **Q:** What stops the adapter, which accepts unsigned test tokens, reaching production?
+  **A:** It binds only to 127.0.0.1, lives outside every Lambda entry point's import graph, and a test checks the synthesised bundles do not contain it.
+- **Q:** Why not a fake DynamoDB?
+  **A:** A fake agrees with the handlers by construction. The real engine enforces expression rules, index behaviour and the item-size limit, and its 409,600-byte boundary matches AWS's documented rules.
+- **Q:** How do you know nothing was lost in the switch?
+  **A:** The old rig stays until the new one passes at least all 121 existing tests, and is removed only in the change that installs the CDK API stack.

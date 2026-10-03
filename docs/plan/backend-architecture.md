@@ -136,15 +136,20 @@ PK `USER#<sub>`, with sort-key prefixes:
 
 ### Limits, enforced by zod at the boundary
 
-> **Not accepted as written (3 October 2026).** Peter found two faults in this table: the 256 KB body limit conflicts with the 100,000-character content limit, and the item-size reasoning ignores generated summary and actions and DynamoDB's attribute overhead. "Far below 400 KB" is also wrong for 4-byte text. A revised proposal is waiting for his decision. Do not build to this table.
+Decided on 3 October 2026 ([ADR 0009](../adr/0009-input-limits-and-code-point-safe-text.md)). Text is counted in Unicode code points of the decoded string, with no trimming and no normalisation. The first proposal (100,000 characters, 256 KB body) was not accepted, because a valid note could exceed its own body limit and the item-size calculation ignored generated fields.
 
-| Field | Limit |
-|---|---|
-| `content` | ≤ 100,000 characters, keeping the item far below DynamoDB's 400 KB |
-| `title` | ≤ 200 characters |
-| `tags` | ≤ 20 tags, each ≤ 40 characters |
-| Reminders | ≤ 20 per note |
-| JSON request body | ≤ 256 KB |
+| Thing | Limit | Violation |
+|---|---|---|
+| Decoded request body | 1,048,576 bytes | `413 payload_too_large` |
+| `content` | 60,000 code points | `422 limit_exceeded` |
+| `title` | 200 code points | `422 limit_exceeded` |
+| `tags` | ≤ 20, each ≤ 40 code points | `422 limit_exceeded` |
+| Reminders | ≤ 20, each ≤ 40 characters | `422 limit_exceeded` |
+| Generated `summary` | ≤ 1,000 code points, with the ellipsis inside the limit | bounded before saving |
+| Generated `actions` | ≤ 50, each ≤ 200 code points | bounded before saving |
+| Complete stored item | ≤ 350,000 bytes by DynamoDB's sizing rules | `422 note_too_large` |
+
+Unpaired UTF-16 surrogates in user text get `422 invalid_text`. User `content` is never truncated. With every field at its cap, a four-byte-text note measured 289,464 bytes on DynamoDB Local, under the 350,000 ceiling and the 409,600-byte hard limit. The 1 MiB body limit is for JSON encoding overhead and application protection; operation receipts are separate items.
 
 Audio never goes through the API; it uses presigned S3 uploads. Exceeding a limit returns a plain-language 413 or 422, never a 500.
 

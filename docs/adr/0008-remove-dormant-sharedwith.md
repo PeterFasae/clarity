@@ -60,13 +60,22 @@ Peter's words, 3 October 2026:
 > A request containing sharedWith must get 422 sharing_not_available rather than being silently stripped. A future sharing design should introduce a deliberate invitation and authorisation model instead of inheriting this unused email array.
 
 ## Consequences
-- Code and tests change after the review Peter asked for, as routine implementation of this decision.
+- Code and tests change as routine implementation of this decision (`packages/core`, the handlers, the store, the web app and their tests).
 - `sharing_not_available` joins the error catalogue in `packages/core`.
 - The roadmap's defect 7 is marked decided.
 - `docs/status.json` keeps Sharing as `planned`.
 
 ## How to explain this
-To be filled in when this lands.
+Sharing was never built, but the API accepted and stored a list of email addresses with read and write permissions that did nothing. That is personal data about people who agreed to nothing, and a promise the product cannot keep, so it is removed completely: from the request, the stored note, the response, the list filter and the web app's "Shared" tab. A request that still sends it is refused with a clear error, not quietly accepted. When sharing is designed, it will start from an invitation and authorisation model rather than inherit this array.
 
 ## Questions a reviewer will ask
-To be filled in when this lands.
+- **Q:** Why refuse the field instead of ignoring it?
+  **A:** Ignoring it would let a client believe a note was shared when it was not. The refusal is `422 sharing_not_available`.
+- **Q:** Why remove the stored field and the filter too, not just stop writes?
+  **A:** Nothing is deployed, so there is nothing to migrate, and a dormant surface would be inherited by whatever sharing design comes next.
+- **Q:** Did sharing ever work?
+  **A:** No. Another user's note is always a 403 (ownership tests), so a listed address never gained access. Sharing remains `planned` in `docs/status.json`.
+- **Q:** Does any client break?
+  **A:** The web app never wrote the field. Its "Shared" tab, which could only show an empty list, is removed.
+- **Q:** What happens to the public copy about sharing?
+  **A:** Nothing changes: it stays unclaimed because the feature is `planned`.

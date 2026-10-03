@@ -6,29 +6,30 @@
 - **Roadmap item:** D2 in [`docs/plan/backend-roadmap.md`](../plan/backend-roadmap.md)
 - **Supersedes:** the infrastructure and runtime part of CONTEXT.md §4.4 (Serverless Framework v3, `nodejs20.x`) and BUILD.md Phase 0, step 7.
 - **Evidence** (checked on 3 October 2026):
-  - [AWS Lambda runtimes](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html), as the page read when fetched:
+  - [AWS Lambda runtimes](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html). The page has a "Supported runtimes" table and a separate "Deprecated runtimes" table, and Node.js 20 is in the second:
 
-    | Runtime | Deprecated | Function creation blocked | Function updates blocked |
-    |---|---|---|---|
-    | `nodejs20.x` | 30 April 2026 | 29 July 2027 | 31 August 2027 |
-    | `nodejs22.x` | 30 April 2027 | 1 June 2027 | 1 July 2027 |
-    | `nodejs24.x` | 30 April 2028 | 1 June 2028 | 1 July 2028 |
-    | `nodejs26.x` | not scheduled | not scheduled | not scheduled |
+    | Runtime | Table | Deprecated | Function creation blocked | Function updates blocked |
+    |---|---|---|---|---|
+    | `nodejs20.x` | Deprecated runtimes | 30 April 2026 | 1 February 2027 | 3 March 2027 |
+    | `nodejs22.x` | Supported runtimes | 30 April 2027 | 1 June 2027 | 1 July 2027 |
+    | `nodejs24.x` | Supported runtimes | 30 April 2028 | 1 June 2028 | 1 July 2028 |
+    | `nodejs26.x` | Supported runtimes (preview) | not scheduled | not scheduled | not scheduled |
 
-    The same page says Node.js 26 is in **public preview**, "not covered by the Lambda SLA or Technical Support" and "should not be used for production workloads", with general availability targeted for November 2026.
-  - **A date to reconcile.** Peter's decision text says AWS lists Node.js 20 updates as blocked from 3 March 2027. The public page did not show that date on 3 October 2026; it shows 31 August 2027. The Node.js 22 dates in his text match the page. This ADR records the page. If 3 March 2027 came from an AWS Health Dashboard notice or an email, that source should be added here. It changes nothing in the decision: Node.js 20 is already deprecated.
+    The Node.js 20 dates are as Peter read them from the "Deprecated runtimes" table on 3 October 2026. Fetches of the same URL by Claude on the same day (the HTML page, its Markdown version and a summarising fetch) returned 29 July 2027 and 31 August 2027 for that row, which is not what Peter read. The two readings were not reconciled, so re-read the live page before either pair of dates is quoted outside this repository. The decision does not depend on them: Node.js 20 is deprecated either way. The dates for Node.js 22, 24 and 26 are the same in both readings.
+
+    The same page says Node.js 26 is in **public preview**, "not covered by the Lambda SLA or Technical Support" and "should not be used for production workloads", with general availability targeted for November 2026. It also says all supported Lambda runtimes support both `x86_64` and `arm64`, so Node.js 24 on `arm64` is a supported combination.
   - [Lambda handlers in Node.js](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html): "Callback-based function handlers are only supported up to Node.js 22. Starting from Node.js 24, asynchronous tasks should be implemented using async function handlers."
   - [AWS CDK v2 Developer Guide](https://docs.aws.amazon.com/cdk/v2/guide/home.html): CDK supports TypeScript, JavaScript, Python, Java, C#/.NET and Go, and deploys through CloudFormation.
   - Serverless Inc., [Serverless Framework V4: a new model](https://www.serverless.com/blog/serverless-framework-v4-a-new-model): V.3 "will continue to be maintained via critical security and bug fixes through 2024". V.4 introduces fees for organisations with annual revenue above $2M; smaller organisations are exempt.
 
 ## Problem
-- `services/api/serverless.yml` pins `nodejs20.x`, which AWS deprecated on 30 April 2026. Existing functions can still be updated until the block date, but a new project should not start on a deprecated runtime.
+- `services/api/serverless.yml` pins `nodejs20.x`, which AWS deprecated on 30 April 2026. Existing functions can still be updated until the update-block date, but a new project should not start on a deprecated runtime.
 - Serverless Framework v3 has had no fixes since the end of 2024. Its replacement (v4) needs an account and a licence arrangement, which Clarity would not otherwise need.
 - The local machine runs Node.js 23.1.0, an odd-numbered release that never becomes LTS, and `package.json` allows `>=20`. Local, CI and Lambda are not on the same version.
 
 ## Proposed approach
 - **AWS CDK v2 in TypeScript**, in a new `infra/` workspace: Data, Auth, Api, Events (later) and Observability stacks. cdk-nag runs on every synth, and each suppression carries a written reason.
-- **Node.js 24 on arm64** through `NodejsFunction`. Node.js 24 is chosen because it gives the longest supported runway (deprecation 30 April 2028) and avoids another runtime migration soon. It is not chosen because Node.js 22 would expire during the pilot: Node.js 22 is deprecated on 30 April 2027 and updates are blocked from 1 July 2027, which is after the 12-week pilot window.
+- **Node.js 24 on arm64** through `NodejsFunction`. AWS lists the combination as supported. The London deployment itself is verified at the first synth and in staging, and no performance or cost advantage of arm64 is claimed until it is measured. Node.js 24 is chosen because it gives the longest supported runway (deprecation 30 April 2028) and avoids another runtime migration soon. It is not chosen because Node.js 22 would expire during the pilot: Node.js 22 is deprecated on 30 April 2027 and updates are blocked from 1 July 2027, which is after the 12-week pilot window.
 - **Node.js 26 is preview and is not used in production.**
 - **Strict TypeScript for new or touched backend handlers.** The remaining handlers migrate incrementally. `packages/core` is already TypeScript.
 - **One Node version everywhere.** `.nvmrc` and `engines` pin the same major version used by Lambda (24), CI uses the same file, and the local machine moves off 23.1.0 before the CDK work starts.
@@ -79,10 +80,21 @@ Peter's words, 3 October 2026:
 ## Consequences
 - `infra/` is scaffolded next (roadmap week 1, item 4), with `engines` and `.nvmrc` set to Node.js 24 in the same change.
 - The local Node version moves to 24 before that work.
-- The Node.js 20 block date stays open in the evidence above until the source of 3 March 2027 is identified.
+- The Node.js 20 block dates are recorded as Peter read them, with Claude's differing fetch noted in the evidence. Nothing else in the design depends on them.
 
 ## How to explain this
-To be filled in when this lands.
+Infrastructure is code, written in TypeScript with AWS CDK, because the Serverless Framework v3 we started on stopped receiving fixes at the end of 2024 and its successor needs a licence relationship we don't otherwise need. Lambda runs Node.js 24, which AWS supports until April 2028. Node.js 22 would also have covered the pilot, but would force another migration soon after. All 13 handlers already use the async style that Node.js 24 requires, and one Node version is pinned for local machines, CI and Lambda, so the tests run on what production runs. New and touched handlers are strict TypeScript, and the rest move over as they are touched.
 
 ## Questions a reviewer will ask
-To be filled in when this lands.
+- **Q:** Why leave the Serverless Framework?
+  **A:** Version 3 has had no fixes since the end of 2024, and version 4 needs an account and a licence arrangement (free under $2M revenue today). CDK is open source and shares TypeScript with the contract package.
+- **Q:** Why Node.js 24 and not 22?
+  **A:** Both would cover the 12-week pilot. Node.js 24 has the longest supported runway (deprecation 30 April 2028), so it avoids a second migration soon after.
+- **Q:** Why not Node.js 26?
+  **A:** AWS lists it as a public preview, outside the Lambda SLA and not for production.
+- **Q:** Is arm64 faster or cheaper?
+  **A:** Not claimed. AWS lists Node.js 24 on arm64 as supported, and the London deployment is verified at synth and in staging. Any advantage has to be measured.
+- **Q:** Do any handlers use the callback style removed in Node.js 24?
+  **A:** No. All 13 are async functions and the shared wrapper returns an async function, checked on 3 October 2026.
+- **Q:** Is the local machine on the same Node version?
+  **A:** Not yet: it runs 23.1.0. `.nvmrc` and `engines` are set to 24 with the CDK scaffold.

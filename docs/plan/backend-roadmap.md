@@ -39,7 +39,7 @@ Each item is proposed using the decision template in `docs/adr/0000-template.md`
 | # | Decision | Reopens / touches | Needed by | Recommended starting point |
 |---|---|---|---|---|
 | D1 | Region: eu-west-2 (London). **Decided 3 Oct (ADR 0005):** London is the primary region. Residency is described with AWS's documented exceptions, and nothing claims London is faster or cheaper until measured | CONTEXT §4.4 (region only) | Week 1 | Architecture §1; ADR 0005 |
-| D2 | IaC and language: AWS CDK v2 in TypeScript, Node.js 24, handlers moved to TypeScript incrementally. **Decided 3 Oct (ADR 0006):** Node.js 24 on arm64 chosen for runway, Node.js 26 (preview) not used, no callback handlers exist, one Node version pinned everywhere. Open: the source of the 3 March 2027 Node.js 20 date | CONTEXT §4.4 (tooling), ENGINEERING.md | Week 1 | Architecture §15; ADR 0006 |
+| D2 | IaC and language: AWS CDK v2 in TypeScript, Node.js 24, handlers moved to TypeScript incrementally. **Decided 3 Oct (ADR 0006):** Node.js 24 on arm64 chosen for runway, Node.js 26 (preview) not used, no callback handlers exist, one Node version pinned everywhere. | CONTEXT §4.4 (tooling), ENGINEERING.md | Week 1 | Architecture §15; ADR 0006 |
 | D3 | Replacement for the `serverless offline` test rig and local dev server. **Decided 3 Oct (ADR 0007):** DynamoDB Local, in-process handlers, a loopback-only HTTP adapter, one shared route manifest with a synth-versus-routes test, staging smoke tests as the proof of API Gateway and Cognito behaviour | ADRs 1.7, 1.11 | Week 1 | ADR 0007 |
 | D4 | Concurrency and idempotency contract: `version`, `baseVersion`, 409, client UUIDv7 ids, `Idempotency-Key`. **Decided 3 Oct (ADR 0004):** durable operation receipts with keyed request fingerprints; content-free success receipts and `409`s; exact successful responses kept 30 days, failed mutations outside that guarantee; token statuses `428`, `400`, `403` and `410`; stable error codes | — | Week 2 | Architecture §3, items 1–4; §4, error responses; ADR 0004 |
 | D5 | CI/CD and environments (dev only to start; GitHub OIDC to AWS) | — | Week 2 | Architecture §15 |
@@ -73,7 +73,7 @@ Each fix needs a test that fails before the fix and passes after it.
 |---|---|---|---|
 | 1 | **Lost updates.** `updateNote` reads the note, awaits `enrich()` (up to `ANTHROPIC_TIMEOUT_MS`, 6s by default), then calls `putNote` with no condition. Edits from two devices silently overwrite each other | `services/api/functions/updateNote.js`, `lib/dynamo.js` `putNote` | D4: `version` + conditional write + `409 version_conflict`. Revisions and merge follow in Phase 5 |
 | 2 | **Duplicate notes on retry.** Ids are generated on the server and nothing is idempotent | `functions/createNote.js` | D4: client ids + `Idempotency-Key` |
-| 3 | **No size limit.** `content` has only `min(1)`. A note over DynamoDB's 400 KB item limit becomes a 500 | `packages/core/api.ts` | Limits per architecture §2, with a plain-language 413/422 |
+| 3 | **No size limit.** `content` has only `min(1)`. A note over DynamoDB's 400 KB item limit becomes a 500 | `packages/core/api.ts` | **Decided 3 Oct (ADR 0009):** limits counted in Unicode code points, a 1 MiB body limit, bounded generated fields and a 350,000-byte item ceiling, with plain-language `413` and `422` responses, and `422 invalid_text` for unpaired surrogates |
 | 4 | **"Delete everything" leaves the Cognito user**, including the email address, behind. The handler defers to a "Phase 3 flow" that doesn't exist; the app only signs out | `functions/deleteMe.js`, `apps/web/src/pages/Settings.tsx` | `AdminDeleteUser` inside the deletion flow, with a test |
 | 5 | **Deprecated runtime.** `nodejs20.x` was deprecated on 30 April 2026 | `serverless.yml` | D2 (Node.js 24) |
 | 6 | **Unmaintained deploy tool.** Serverless Framework v3 has had no fixes since the end of 2024 | `services/api` | D2 (CDK) |
@@ -108,8 +108,8 @@ Each fix needs a test that fails before the fix and passes after it.
    Point them at this file. Don't rewrite their history.
 2. **Propose D1, D2 and D3.** D4 is already decided: ADR 0004. Wait for Peter's decisions, and record them.
 3. **P0 fixes that don't depend on D1–D4**, with tests:
-   - **#7 removing `sharedWith`.** Decided 3 October (ADR 0008). Implementation follows Peter's review of the week 1 documents.
-   - **#3 limits.** Changes behaviour a client can see. The first proposal was not accepted on 3 October: the body limit and the character limit conflicted, and the item-size calculation did not cover generated fields. A revised proposal is waiting for Peter's decision. Nothing is built until it is approved.
+   - **#7 removing `sharedWith`.** Decided 3 October (ADR 0008).
+   - **#3 limits.** Decided 3 October (ADR 0009) after the first proposal was not accepted.
    - **#15 log hygiene and #14 backoff,** pulled forward from P1. These are routine.
    - **#8 status.json and privacy copy.** A routine claims fix.
 4. **Once D2 is decided:** scaffold `infra/` (CDK).

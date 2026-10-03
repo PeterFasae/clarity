@@ -18,7 +18,7 @@
   - [AWS service endpoints](https://docs.aws.amazon.com/general/latest/gr/rande.html), "Global endpoints": a few services have one global endpoint that spans Regions (IAM, CloudFront, Route 53, AWS Organizations, Global Accelerator, among others). Data handled by those is outside any one Region's boundary.
   - European Commission, [press release IP/25/3059](https://ec.europa.eu/commission/presscorner/api/files/document/print/en/ip_25_3059/IP_25_3059_EN.pdf), 19 December 2025: the Commission renewed the two 2021 adequacy decisions for the United Kingdom, with a sunset clause running until 27 December 2031 and a review after four years. This covers personal data flowing from the EEA to the UK, so it is supporting context for any EU users, not the reason for this choice.
   - Information Commissioner's Office, [International transfers: a guide](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/international-transfers-a-guide/): a transfer of personal data out of the UK needs adequacy regulations or an appropriate safeguard.
-  - **Not confirmed from a static AWS page:** that Lambda's `arm64` architecture is available in `eu-west-2`. AWS says arm64 is "available in most AWS Regions" and shows the list in a drop-down that does not render as text. The first `cdk synth` and deploy to London settles it in week 2; if it fails, the fix is `x86_64`, a one-line change.
+  - [AWS Lambda runtimes](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html): "All supported Lambda runtimes support both x86_64 and arm64 architectures." AWS's [Lambda architectures page](https://docs.aws.amazon.com/lambda/latest/dg/foundation-arch.html) adds that arm64 is "available in most AWS Regions" and lists them in a drop-down that does not render as text. So Node.js 24 on `arm64` is a supported combination, and whether it deploys in London is settled by the first `cdk synth` and the staging deploy in week 2. If it does not, `x86_64` is a one-line change. No performance or cost advantage of `arm64` is claimed until it is measured.
   - **Not retrieved:** DynamoDB, Lambda and KMS prices for London against Stockholm. AWS's pricing pages did not render as text. Check in the AWS Pricing Calculator before claiming any difference.
 
 ## Problem
@@ -70,7 +70,16 @@ Peter's words, 3 October 2026:
 - Week 2 checks `arm64` in London on the first synth and deploy.
 
 ## How to explain this
-To be filled in when this lands.
+We chose London because the pilot is UK-based and nothing was deployed yet, so it cost a few lines now instead of a Cognito and data migration later. AWS lists every service we need as available in London, including SES for receiving email. The one thing not confirmed from a static page, Lambda on arm64 in London, is checked at the first deploy. AWS says it keeps customer content in the region we choose except for the exceptions it documents, so we describe residency that way and never say "your notes never leave the UK". We have measured neither speed nor price, so we claim neither.
 
 ## Questions a reviewer will ask
-To be filled in when this lands.
+- **Q:** Why London rather than Stockholm or Ireland?
+  **A:** The pilot is UK-based and the choice was free before the first deploy. Stockholm would have put a UK pilot's data outside the UK. Ireland was not assessed.
+- **Q:** Does this mean all the data stays in the UK?
+  **A:** No. AWS's own statement allows exceptions for global services such as IAM, for operational data, and for the behaviour of individual services. The week 10 review lists them, and where AI text is processed is a separate decision (D19).
+- **Q:** Is London faster or cheaper?
+  **A:** Not measured, so not claimed. The latency harness exists and can compare regions from a UK client once a stage is deployed.
+- **Q:** What about EU users?
+  **A:** The European Commission renewed its UK adequacy decisions on 19 December 2025, valid to 27 December 2031 with a review after four years (IP/25/3059). That is supporting context, not the reason for the choice.
+- **Q:** What if Lambda on arm64 is not available in London?
+  **A:** Switching to x86_64 is a one-line change in the CDK stack. Week 2 finds out at the first synth and staging deploy.
