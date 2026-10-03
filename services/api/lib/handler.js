@@ -59,7 +59,7 @@ export function withAuth(fn) {
 export function parseBody(event, schema) {
   let parsed;
   try {
-    parsed = event.body ? JSON.parse(event.body) : {};
+    parsed = event.body ? JSON.parse(decodedBody(event)) : {};
   } catch {
     throw new ZodError([
       { code: 'custom', path: [], message: 'The request body was not valid JSON.' },
@@ -71,6 +71,18 @@ export function parseBody(event, schema) {
 /** Query strings arrive as `null` rather than `{}` when there are none. */
 export function parseQuery(event, schema) {
   return schema.parse(event.queryStringParameters ?? {});
+}
+
+/**
+ * The body as text. API Gateway marks a body it has base64 encoded, and the
+ * size gate already measures it decoded, so parsing has to read it decoded too.
+ * The bytes must be valid UTF-8: a lenient decoder would swap a bad byte for
+ * U+FFFD and quietly change what the user wrote, so a body that is not valid
+ * UTF-8 is refused like any other body that is not valid JSON.
+ */
+function decodedBody(event) {
+  if (!event.isBase64Encoded) return event.body;
+  return new TextDecoder('utf-8', { fatal: true }).decode(Buffer.from(event.body, 'base64'));
 }
 
 /**
