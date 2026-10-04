@@ -276,7 +276,7 @@ Optional quiet line beneath: *Sound familiar? You're describing executive functi
 
 **4 · Proof — the interactive demo.** The centrepiece. A working thing on the page, running entirely client-side, importing `packages/retrieval` so **the demo is the real engine**. Three tabs:
 
-- **Speak it.** A real mic button. The visitor talks; live transcript appears (Web Speech API: the browser's own recognition, which in Chrome sends the audio to an online service, so the page must say the audio may leave the device). Nothing else on this page converts as hard as watching your own voice become text. *Unsupported browsers get a "play sample" button that types a pre-recorded transcript at natural speed — never show a broken mic.*
+- **Speak it.** A real mic button. The visitor talks; live transcript appears (Web Speech API: the browser's own recognition, which in Chrome can use an online speech service, so the page must say the audio may leave the device). Nothing else on this page converts as hard as watching your own voice become text. *Unsupported browsers get a "play sample" button that types a pre-recorded transcript at natural speed — never show a broken mic.*
 - **Find it.** A small seeded set of messy notes and a search box. The visitor types something that doesn't match any title, and the right note comes back. **This is the thesis, demonstrated.** Show the match score.
 - **Focus mode.** Click, and the entire page — nav, sections, footer — fades to one note on a calm field. Click again, it returns. Demonstrating focus mode *by doing it to the marketing page* is the most memorable moment available to this site.
 

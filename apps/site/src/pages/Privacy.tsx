@@ -47,8 +47,8 @@ export function Privacy() {
               <p className="mt-3 text-ink-muted">
                 The summarise and focus-mode demos run entirely in your browser.
                 The voice demo uses your browser&rsquo;s own speech recognition,
-                and in some browsers, Chrome among them, that sends the audio to
-                an online speech service run by the browser&rsquo;s maker. We
+                and in some browsers, Chrome among them, that can send the audio
+                to an online speech service used by the browser. We
                 never receive that audio, store it, or see it, but we
                 can&rsquo;t promise it stays on your device. If you would rather it
                 did, use the sample instead of the microphone. The text you type

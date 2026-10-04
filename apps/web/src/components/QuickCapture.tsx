@@ -161,10 +161,10 @@ export function QuickCapture() {
         )}
 
         {speech.supported && (
-          // Said where the choice is made. Browser dictation is usually an online
+          // Said where the choice is made. Browser dictation can use an online
           // service, so the audio can leave the device even though Clarity never gets it.
           <p id="dictation-privacy" className="text-sm text-muted-foreground">
-            Dictation uses your browser&rsquo;s speech service, which may send your voice to it.
+            Dictation may send your voice to an online speech service used by your browser.
           </p>
         )}
 
