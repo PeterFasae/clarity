@@ -1,3 +1,4 @@
+import { LIMITS } from '@clarity/core';
 import type {
   ActionItem,
   CreateNoteRequest,
@@ -57,6 +58,18 @@ export class ApiError extends Error {
         return 'AI assistance is switched off for this account.';
       case 'offline':
         return "Could not reach Clarity. Your connection may be down — nothing you've typed is lost.";
+      // The server's wording is written for API clients ("the details say which
+      // part"), so a person is told which part here.
+      case 'limit_exceeded':
+        return this.details?.some((detail) => detail.path === 'content')
+          ? `This note is longer than the ${LIMITS.content.toLocaleString('en-GB')} characters Clarity can keep, so nothing was changed. Shorten it, or split it into two notes.`
+          : 'Something here is longer than Clarity can keep, so nothing was changed.';
+      case 'payload_too_large':
+        return 'That is too big to send in one go, so nothing was changed. If it is a long note, try splitting it into two.';
+      case 'note_too_large':
+        return 'This note, with everything Clarity works out from it, is too big to keep in one piece, so nothing was changed. Try splitting it into two notes.';
+      case 'invalid_text':
+        return 'Some of the text has a character in it that cannot be saved, so nothing was changed. Try typing or pasting it again.';
       default:
         return this.message || 'Something went wrong. Nothing was lost; try again in a moment.';
     }
