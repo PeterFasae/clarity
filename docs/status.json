@@ -1,7 +1,7 @@
 {
   "$comment": "The single registry of what actually exists. Both apps/web and apps/site read it, so a 'Coming soon' label cannot rot after a feature ships or slips. status is built | in-progress | planned. Public copy may only describe a feature in the PRESENT TENSE when its status is 'built' — see CONTEXT.md §6. Update this file in the same commit as any change to what a feature does.",
-  "updated": "2026-08-10",
-  "phase": "3 in progress — accessibility audited and fixed, claims audited, the Find it demo built, the deploy prepared but not run. Nothing is deployed, so nothing here is marked built.",
+  "updated": "2026-10-03",
+  "phase": "Phases 0–3 complete locally; Phase 4 week 1 in progress; nothing deployed.",
   "features": [
     {
       "id": "quick-capture",
