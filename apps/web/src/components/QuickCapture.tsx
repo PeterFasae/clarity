@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useCreateNote } from '@/hooks/useNotes';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { ApiError } from '@/lib/api';
+import { appendDictation, isBlank, restoreAfterFailedSave } from '@/lib/draft';
 
 /**
  * Quick capture — the thing the whole product is arranged around.
@@ -16,7 +17,8 @@ import { ApiError } from '@/lib/api';
  *
  * Nothing here blocks on the network. The box clears the moment the request
  * goes out, so the next thought can go straight in behind it, and a failure
- * puts the text back rather than losing it.
+ * puts the text back rather than losing it. What is sent is exactly what was
+ * typed: whether the box is blank is decided on a trimmed copy and nothing else.
  */
 export function QuickCapture() {
   const [content, setContent] = useState('');
@@ -57,14 +59,15 @@ export function QuickCapture() {
   const { transcript, reset: resetSpeech } = speech;
   useEffect(() => {
     if (!transcript) return;
-    setContent((current) => (current ? `${current.trimEnd()} ${transcript}` : transcript));
+    setContent((current) => appendDictation(current, transcript));
     resetSpeech();
   }, [transcript, resetSpeech]);
 
   function save() {
-    const text = content.trim();
-    if (!text || createNote.isPending) return;
+    if (isBlank(content) || createNote.isPending) return;
 
+    // Sent untouched, and put back untouched if it fails.
+    const text = content;
     setContent('');
     setError(null);
 
@@ -76,8 +79,9 @@ export function QuickCapture() {
           window.setTimeout(() => setJustSaved(null), 4000);
         },
         onError: (caught) => {
-          // Never swallow what someone wrote.
-          setContent(text);
+          // Never swallow what someone wrote, and never overwrite what they
+          // have written since: the box was empty when this was sent.
+          setContent((typedSince) => restoreAfterFailedSave(text, typedSince));
           setError(caught instanceof ApiError ? caught.readable : 'Could not save that. It is still in the box.');
           textareaRef.current?.focus();
         },
@@ -92,7 +96,7 @@ export function QuickCapture() {
     }
   }
 
-  const previewTitle = content.trim() ? deriveTitle(content) : '';
+  const previewTitle = isBlank(content) ? '' : deriveTitle(content);
 
   return (
     <section aria-labelledby="capture-heading" className="rounded-lg border border-border bg-card p-4">
@@ -123,7 +127,7 @@ export function QuickCapture() {
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Button type="button" onClick={save} disabled={!content.trim() || createNote.isPending}>
+        <Button type="button" onClick={save} disabled={isBlank(content) || createNote.isPending}>
           {createNote.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           Save
         </Button>
