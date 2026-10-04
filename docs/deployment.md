@@ -16,7 +16,7 @@ You need:
   DynamoDB, Cognito, IAM roles, CloudWatch alarms and SNS topics.
 - The AWS CLI (`brew install awscli`), which is **not** currently installed on
   this machine.
-- Node 20 or later.
+- Node.js 24, as pinned in `.nvmrc` (ADR 0006). Lambda runs the same major version.
 - Optionally an Anthropic API key. Without one the LLM engine reports itself
   unconfigured and every account is answered by the local engine — which is the
   correct behaviour for a deployment that has not opted in, not a failure.

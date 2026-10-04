@@ -23,6 +23,8 @@ it back out was.
 
 ## Running it
 
+Node.js 24 (the version in `.nvmrc`; `nvm use` or `fnm use` reads it).
+
 ```bash
 npm install
 npm test                     # 243 tests; the retrieval engine's 25 must stay green
