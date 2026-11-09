@@ -27,7 +27,7 @@ Node.js 24 (the version in `.nvmrc`; `nvm use` or `fnm use` reads it).
 
 ```bash
 npm install
-npm test                     # 243 tests; the retrieval engine's 25 must stay green
+npm test                     # 270 tests passing as of 4 November 2026; the retrieval engine's 25 must stay green
 npm run build                # typecheck + build every workspace
 
 npm run dev -w apps/web            # the product SPA     → :8080
